@@ -1,0 +1,3 @@
+[submodule "LibREDasm"]
+	path = LibREDasm
+	url = https://github.com/REDasmOrg/REDasm-Library.git
