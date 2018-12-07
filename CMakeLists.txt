@@ -10,15 +10,13 @@ add_subdirectory(LibREDasm)
 set(SOURCES
     main.cpp
     redsigc.cpp
-    generator/patterngenerator.cpp
-    generator/jsongenerator.cpp
+    patterngenerator.cpp
     psx/psyqlib_generator.cpp
     psx/psyqlib.cpp)
 
 set(HEADERS
     redsigc.h
-    generator/patterngenerator.h
-    generator/jsongenerator.h
+    patterngenerator.h
     psx/psyqlib_generator.h
     psx/psyqlib.h)
 

@@ -8,7 +8,7 @@
 #include <string>
 #include <list>
 #include <redasm/redasm_api.h>
-#include "generator/patterngenerator.h"
+#include "patterngenerator.h"
 
 class REDSigC
 {

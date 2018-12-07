@@ -1,7 +1,7 @@
 #ifndef PSYQLIB_GENERATOR_H
 #define PSYQLIB_GENERATOR_H
 
-#include "../generator/patterngenerator.h"
+#include "../patterngenerator.h"
 
 class PsyQLibGenerator: public PatternGenerator
 {
