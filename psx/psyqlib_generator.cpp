@@ -35,9 +35,7 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
         {
             std::cout << "Generating " << REDasm::quoted(psyqdefinition.second.name) << std::endl;
             BytePattern& bp = bytepatterns[psyqdefinition.second.sectionnumber];
-
-            bp.names.push_back(std::make_pair(psyqdefinition.second.offset,
-                                              fullname(prefix, psyqdefinition.second.name)));
+            bp.name(fullname(prefix, psyqdefinition.second.name), psyqdefinition.second.offset, REDasm::SymbolTypes::Function);
         }
 
         for(auto& psyqpatch : psyqlink.patches)

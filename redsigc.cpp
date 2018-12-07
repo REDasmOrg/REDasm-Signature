@@ -105,7 +105,7 @@ bool REDSigC::checkOptions()
         m_options |= REDSigC::SDBOutput;
 
     if(m_outfile.empty())
-        m_outfile = m_infile + ((m_options & REDSigC::JSONOutput) ? ".json" : ".sdb");
+        m_outfile = m_infile;
 
     return !m_infile.empty();
 }
