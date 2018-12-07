@@ -1,5 +1,6 @@
 #include "redsigc.h"
 #include <redasm/database/signaturedb.h>
+#include <redasm/support/utils.h>
 #include <iostream>
 #include <cstring>
 
@@ -28,12 +29,14 @@ int REDSigC::run()
         if(!patterngenerator)
             continue;
 
+        std::cout << "Patterns generated with " << REDasm::quoted(patterngenerator->name()) << std::endl;
+
         if((m_options & REDSigC::JSONOutput) && !patterngenerator->saveAsJSON(m_outfile))
         {
             std::cout << "ERROR: Cannot save JSON pattern to " << m_outfile << std::endl;
             return 2;
         }
-        else if(!patterngenerator->saveAsSDB(m_outfile))
+        else if((m_options & REDSigC::SDBOutput) && !patterngenerator->saveAsSDB(m_outfile))
         {
             std::cout << "ERROR: Cannot save SDB pattern to " << m_outfile << std::endl;
             return 2;
