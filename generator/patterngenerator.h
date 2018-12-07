@@ -20,6 +20,7 @@ class PatternGenerator: public std::list<BytePattern>
     public:
         PatternGenerator();
         bool saveAsJSON(const std::string& jsonfile);
+        bool saveAsSDB(const std::string& sdbfile);
 
     public:
         virtual std::string name() const = 0;

@@ -37,6 +37,11 @@ bool PatternGenerator::saveAsJSON(const std::string &jsonfile)
     return true;
 }
 
+bool PatternGenerator::saveAsSDB(const std::string &sdbfile)
+{
+    return false;
+}
+
 void PatternGenerator::wildcard(BytePattern *bytepattern, size_t pos, size_t n)
 {
     pos *= 2;
