@@ -11,8 +11,11 @@
 #include <redasm/redasm_types.h>
 
 #define PSYQ_MODULE_NAME_LENGTH 8
+#define PSYQ_LIB_SIGNATURE_SIZE 3
+#define PSYQ_LIB_SIGNATURE      "LIB"
 
 //struct PSYQString { u8 length; char data[1]; };
+struct PSYQFile { char signature[PSYQ_LIB_SIGNATURE_SIZE]; u8 version; };
 
 enum PSYQState: u8
 {
@@ -65,10 +68,11 @@ enum PSYQPatchType: u8
 
 struct PSYQPatch
 {
-    PSYQPatch(): symbolnumber(0), sectionnumber(0) { patchvalue = {0, 0}; }
+    PSYQPatch(): type(0), offset(0), patchsection(0), symbolnumber(0), sectionnumber(0) { patchvalue = {0, 0}; }
 
     u8 type;
     u16 offset;
+    u16 patchsection; // It's not part of the format
 
     struct {
         u8 unk1;
@@ -111,8 +115,6 @@ struct PSYQModule
     PSYQLink link;
 };
 
-struct PSYQFile { char signature[3]; /* "LIB" */ u8 version; };
-
 class PSYQLib
 {
     private:
@@ -121,6 +123,7 @@ class PSYQLib
     public:
         PSYQLib(const std::string& infile);
         const std::list<PSYQModule>& modules() const;
+        bool load();
 
     private:
         bool executeStateSectionEof();
@@ -144,8 +147,8 @@ class PSYQLib
         std::string readString();
         PSYQModule readModule();
         PSYQState readState();
+        bool readAllModules();
         bool readLink();
-        void readModules();
 
     private:
         std::ifstream m_instream;

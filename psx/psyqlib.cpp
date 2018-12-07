@@ -1,6 +1,7 @@
 #include "psyqlib.h"
 #include <algorithm>
 #include <iostream>
+#include <cstring>
 #include <array>
 
 #define READ_FIELD(field) m_instream.read(reinterpret_cast<char*>(&field), sizeof(field))
@@ -24,12 +25,22 @@ PSYQLib::PSYQLib(const std::string &infile): m_currentlink(NULL), m_currentsecti
     m_patchhandler[PSYQPatchState::PatchToDiff] = std::bind(&PSYQLib::executeStatePatchToValue, this);
 
     m_instream.open(infile, std::ios::in | std::ios::binary);
-    m_instream.read(reinterpret_cast<char*>(&m_header), sizeof(PSYQFile));
-
-    this->readModules();
 }
 
 const std::list<PSYQModule> &PSYQLib::modules() const { return m_modules; }
+
+bool PSYQLib::load()
+{
+    if(!m_instream.is_open())
+        return false;
+
+    m_instream.read(reinterpret_cast<char*>(&m_header), sizeof(PSYQFile));
+
+    if(std::strncmp(m_header.signature, PSYQ_LIB_SIGNATURE, PSYQ_LIB_SIGNATURE_SIZE) || (m_header.version != 1))
+        return false;
+
+    return this->readAllModules();
+}
 
 bool PSYQLib::executeStateSectionEof()
 {
@@ -74,6 +85,7 @@ bool PSYQLib::executeStateSectionBss() { READ_FIELD(m_currentsection->sizebss); 
 bool PSYQLib::executeStateSectionPatch()
 {
     PSYQPatch patch;
+    patch.patchsection = m_currentsection->symbolnumber; // Remember the current section
 
     READ_FIELD(patch.type);
     READ_FIELD(patch.offset);
@@ -256,7 +268,7 @@ bool PSYQLib::readLink()
     return true;
 }
 
-void PSYQLib::readModules()
+bool PSYQLib::readAllModules()
 {
     PSYQModule psyqmodule;
 
@@ -274,9 +286,11 @@ void PSYQLib::readModules()
         if(!this->readLink()) // Check fail state
         {
             m_modules.clear();
-            break;
+            return false;
         }
 
         m_modules.push_back(m_currentmodule);
     }
+
+    return true;
 }
