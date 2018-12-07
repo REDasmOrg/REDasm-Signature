@@ -4,8 +4,9 @@
 #include <fstream>
 #include <json.hpp>
 
-#define WILDCARD_PATTERN "??"
-#define PATTERN_SIZE(size) (size / 2)
+#define WILDCARD_PATTERN        "??"
+#define PATTERN_OFFSET(offset)  (offset / 2)
+#define PATTERN_SIZE(size)      PATTERN_OFFSET(size)
 #define SIGNATURE_SIZE(pattern) PATTERN_SIZE(pattern.size())
 
 using json = nlohmann::json;
@@ -50,43 +51,60 @@ bool PatternGenerator::saveAsSDB(const std::string &sdbfile)
 
     for(auto it = this->begin(); it != this->end(); it++)
     {
+        if(it->pattern.empty())
+            continue;
+
+        if(it->names.empty())
+        {
+            std::cout << "WARNING: Skipping anonymous pattern: " << REDasm::quoted(it->pattern) << std::endl;
+            continue;
+        }
+
         REDasm::Signature sig;
         sig.size = SIGNATURE_SIZE(it->pattern);
 
         this->setFirstAndLast(&sig, *it);
 
-        if(!this->appendAllPatterns(&sig, *it) || !this->appendAllNames(&sig, *it))
+        if(!this->appendAllPatterns(&sig, *it))
             return false;
 
+        this->appendAllNames(&sig, *it);
         sigdb << sig;
     }
 
-    return sigdb.save(sdbfile);
+    return sigdb.save(sdbfile + ".sdb");
 }
 
 void PatternGenerator::setFirstAndLast(REDasm::Signature *signature, const BytePattern& bytepattern) const
 {
     signature->first.type = REDasm::SignaturePatternType::Byte;
-    signature->first.size = 1;
-    signature->first.value.byte = REDasm::byte(bytepattern.pattern);
 
-    signature->last.type = REDasm::SignaturePatternType::Byte;
-    signature->last.size = 1;
-    signature->last.value.byte = REDasm::byte(bytepattern.pattern, -1);
-}
-
-bool PatternGenerator::appendAllNames(REDasm::Signature *signature, const BytePattern &bytepattern) const
-{
-    if(bytepattern.names.empty())
+    for(s64 i = 0; i < bytepattern.pattern.size(); i += 2)
     {
-        std::cout << "ERROR: Found an anonymous pattern" << std::endl;
-        return false;
+        if(bytepattern.pattern.substr(i, 2) == WILDCARD_PATTERN)
+            continue;
+
+        signature->first.offset = PATTERN_OFFSET(i);
+        signature->first.byte = REDasm::byte(bytepattern.pattern, i);
+        break;
     }
 
+    signature->last.type = REDasm::SignaturePatternType::Byte;
+
+    for(s64 i = bytepattern.pattern.size() - 2; i >= 0 ; i -= 2)
+    {
+        if(bytepattern.pattern.substr(i, 2) == WILDCARD_PATTERN)
+            continue;
+
+        signature->last.offset = PATTERN_OFFSET(i);
+        signature->last.byte = REDasm::byte(bytepattern.pattern, i);
+    }
+}
+
+void PatternGenerator::appendAllNames(REDasm::Signature *signature, const BytePattern &bytepattern) const
+{
     for(auto it = bytepattern.names.begin(); it != bytepattern.names.end(); it++)
         signature->symbols.push_back({ it->name, it->offset, it->symboltype });
-
-    return true;
 }
 
 bool PatternGenerator::appendAllPatterns(REDasm::Signature *signature, const BytePattern &bytepattern) const
@@ -111,7 +129,7 @@ bool PatternGenerator::appendAllPatterns(REDasm::Signature *signature, const Byt
         if(!wildcard)
         {
             sigpatt.type = REDasm::SignaturePatternType::CheckSum;
-            sigpatt.value.checksum = this->chuckChecksum(chunk);
+            sigpatt.checksum = this->chuckChecksum(chunk);
         }
         else
             sigpatt.type = REDasm::SignaturePatternType::Skip;
@@ -127,8 +145,8 @@ u16 PatternGenerator::chuckChecksum(const std::string &chunk) const
 {
     std::vector<u8> bytes(SIGNATURE_SIZE(chunk));
 
-    for(size_t i = 0; i < chunk.size(); i += 2)
-        bytes[i] = REDasm::byte(chunk, i);
+    for(size_t i = 0, j = 0; i < chunk.size(); i += 2, j++)
+        bytes[j] = REDasm::byte(chunk, i);
 
     return REDasm::Hash::crc16(bytes.data(), bytes.size());
 }
@@ -141,7 +159,7 @@ std::string PatternGenerator::getChunk(const std::string &s, int offset, bool* w
     {
         *wildcard = true;
 
-        while(hexbyte == WILDCARD_PATTERN)
+        while((offset < s.size()) && (hexbyte == WILDCARD_PATTERN))
         {
             chunk += hexbyte;
             offset += 2;
@@ -152,7 +170,7 @@ std::string PatternGenerator::getChunk(const std::string &s, int offset, bool* w
     {
         *wildcard = false;
 
-        while(hexbyte != WILDCARD_PATTERN)
+        while((offset < s.size()) && (hexbyte != WILDCARD_PATTERN))
         {
             chunk += hexbyte;
             offset += 2;
@@ -177,4 +195,7 @@ void PatternGenerator::wildcard(BytePattern *bytepattern, size_t pos, size_t n)
     bytepattern->pattern.replace(pos, n, WILDCARD_PATTERN);
 }
 
-std::string PatternGenerator::fullname(const std::string &prefix, const std::string &name) { return prefix + "." + name; }
+std::string PatternGenerator::fullname(const std::string &prefix, const std::string &name)
+{
+    return prefix.empty() ? name : (prefix + "." + name);
+}
