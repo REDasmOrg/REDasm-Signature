@@ -2,6 +2,7 @@
 #include "psyqlib.h"
 #include <redasm/support/utils.h>
 #include <iostream>
+#include <map>
 
 PsyQLibGenerator::PsyQLibGenerator(): PatternGenerator() { }
 std::string PsyQLibGenerator::name() const { return "PsyQ Lib Generator"; }
@@ -17,7 +18,8 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
     {
         const PSYQLink& psyqlink = psyqmodule.link;
 
-        std::unordered_map<u16, BytePattern> bytepatterns;
+        std::unordered_map<u16, std::string> patterns;
+        std::map<u32, std::string> offsets;
 
         for(auto& psyqsection: psyqlink.sections)
         {
@@ -26,31 +28,39 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
             if(code.empty())
                 continue;
 
-            BytePattern bp;
-            bp.pattern = REDasm::hexstring(reinterpret_cast<const char*>(code.data()), code.size());
-            bytepatterns[psyqsection.second.symbolnumber] = bp;
-        }
-
-        for(auto& psyqdefinition: psyqlink.definitions)
-        {
-            std::cout << "Generating " << REDasm::quoted(psyqdefinition.second.name) << std::endl;
-            BytePattern& bp = bytepatterns[psyqdefinition.second.sectionnumber];
-
-            bp.name(fullname(prefix, psyqdefinition.second.name), psyqdefinition.second.offset, REDasm::SymbolTypes::Function);
+            patterns[psyqsection.second.symbolnumber] = REDasm::hexstring(reinterpret_cast<const char*>(code.data()), code.size());
         }
 
         for(auto& psyqpatch : psyqlink.patches)
         {
-            auto it = bytepatterns.find(psyqpatch.patchsection);
+            auto it = patterns.find(psyqpatch.patchsection);
 
-            if(it == bytepatterns.end())
+            if(it == patterns.end())
                 continue;
 
-            wildcard(&it->second, psyqpatch.offset, 2);
+            wildcard(it->second, psyqpatch.offset, 2);
         }
 
-        for(auto& item : bytepatterns)
-            this->push_back(item.second);
+        // Prepare offsets
+        for(auto& psyqdefinition: psyqlink.definitions)
+            offsets[psyqdefinition.second.offset] = psyqdefinition.second.name;
+
+        for(auto& psyqdefinition: psyqlink.definitions)
+        {
+            std::cout << "Generating " << REDasm::quoted(psyqdefinition.second.name) << std::endl;
+            const std::string& pattern = patterns[psyqdefinition.second.sectionnumber];
+            u64 length = pattern.size();
+
+            auto it = offsets.find(psyqdefinition.second.offset);
+            it++;
+
+            if(it != offsets.end())
+                length = (psyqdefinition.second.offset + it->first) * 2;
+
+            this->pushPattern(fullname(prefix, psyqdefinition.second.name),
+                              this->subPattern(pattern, psyqdefinition.second.offset * 2, length),
+                              REDasm::SymbolTypes::Function);
+        }
     }
 
     return true;
