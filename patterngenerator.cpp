@@ -98,6 +98,7 @@ void PatternGenerator::setFirstAndLast(REDasm::Signature *signature, const ByteP
 
         signature->last.offset = PATTERN_OFFSET(i);
         signature->last.byte = REDasm::byte(bytepattern.pattern, i);
+        break;
     }
 }
 
