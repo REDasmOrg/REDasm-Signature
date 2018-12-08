@@ -5,6 +5,7 @@
 #include <json.hpp>
 
 #define WILDCARD_PATTERN        "??"
+#define WILDCARD_CHARACTER      '?'
 #define PATTERN_OFFSET(offset)  (offset / 2)
 #define PATTERN_SIZE(size)      PATTERN_OFFSET(size)
 #define SIGNATURE_SIZE(pattern) PATTERN_SIZE(pattern.size())
@@ -25,6 +26,9 @@ bool PatternGenerator::saveAsJSON(const std::string &jsonfile)
 
     for(auto it = this->begin(); it != this->end(); it++)
     {
+        if(!this->isBytePatternValid(*it))
+            continue;
+
         auto patternobj = json::object();
         patternobj["pattern"] = it->pattern;
         patternobj["names"] = json::array();
@@ -52,14 +56,8 @@ bool PatternGenerator::saveAsSDB(const std::string &sdbfile)
 
     for(auto it = this->begin(); it != this->end(); it++)
     {
-        if(it->pattern.empty())
+        if(!this->isBytePatternValid(*it))
             continue;
-
-        if(it->names.empty())
-        {
-            std::cout << "WARNING: Skipping anonymous pattern: " << REDasm::quoted(it->pattern) << std::endl;
-            continue;
-        }
 
         REDasm::Signature sig;
         sig.size = SIGNATURE_SIZE(it->pattern);
@@ -153,6 +151,34 @@ bool PatternGenerator::appendAllPatterns(REDasm::Signature *signature, const Byt
     return true;
 }
 
+bool PatternGenerator::isBytePatternValid(const BytePattern &bytepattern) const
+{
+    if(bytepattern.pattern.empty())
+        return false;
+
+    if(bytepattern.names.empty())
+    {
+        std::cout << "WARNING: Skipping anonymous pattern" << std::endl;
+        return false;
+    }
+
+    int wc = 0;
+
+    for(char ch : bytepattern.pattern)
+    {
+        if(ch == WILDCARD_CHARACTER)
+            wc++;
+    }
+
+    if((wc / static_cast<float>(bytepattern.pattern.size())) >= 0.50)
+    {
+        std::cout << "WARNING: Skipping unrealiable pattern" << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 u16 PatternGenerator::chuckChecksum(const std::string &chunk) const
 {
     std::vector<u8> bytes(SIGNATURE_SIZE(chunk));
@@ -203,8 +229,8 @@ void PatternGenerator::wildcard(BytePattern *bytepattern, size_t pos, size_t n)
         return;
     }
 
-    n *= 2;
-    bytepattern->pattern.replace(pos, n, WILDCARD_PATTERN);
+    for(size_t i = 0; i < n; i++, pos += 2)
+        bytepattern->pattern.replace(pos, 2, WILDCARD_PATTERN);
 }
 
 std::string PatternGenerator::fullname(const std::string &prefix, const std::string &name)

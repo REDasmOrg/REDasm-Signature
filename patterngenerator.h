@@ -48,6 +48,7 @@ class PatternGenerator: public std::list<BytePattern>
         void setFirstAndLast(REDasm::Signature* signature, const BytePattern &bytepattern) const;
         void appendAllNames(REDasm::Signature* signature, const BytePattern &bytepattern) const;
         bool appendAllPatterns(REDasm::Signature* signature, const BytePattern &bytepattern) const;
+        bool isBytePatternValid(const BytePattern& bytepattern) const;
         u16 chuckChecksum(const std::string& chunk) const;
         std::string getChunk(const std::string& s, int offset, bool *wildcard) const;
 
