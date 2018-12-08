@@ -23,5 +23,9 @@ set(HEADERS
 add_executable(${PROJECT_NAME_LC} ${SOURCES} ${HEADERS})
 add_dependencies(${PROJECT_NAME_LC} LibREDasm)
 
+if(WIN32)
+    target_include_directories(${PROJECT_NAME_LC} PUBLIC dirent/include)
+endif()
+
 target_include_directories(${PROJECT_NAME_LC} PUBLIC LibREDasm)
 target_link_libraries(${PROJECT_NAME_LC} PUBLIC LibREDasm)

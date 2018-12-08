@@ -35,6 +35,7 @@ class PatternGenerator: public std::list<BytePattern>
 {
     public:
         PatternGenerator();
+        void setOutputFolder(const std::string& s);
         bool saveAsJSON(const std::string& jsonfile);
         bool saveAsSDB(const std::string& sdbfile);
 
@@ -43,6 +44,7 @@ class PatternGenerator: public std::list<BytePattern>
         virtual bool generate(const std::string& infile, const std::string& prefix = std::string()) = 0;
 
     private:
+        std::string outputFile(const std::string& filename) const;
         void setFirstAndLast(REDasm::Signature* signature, const BytePattern &bytepattern) const;
         void appendAllNames(REDasm::Signature* signature, const BytePattern &bytepattern) const;
         bool appendAllPatterns(REDasm::Signature* signature, const BytePattern &bytepattern) const;
@@ -52,6 +54,9 @@ class PatternGenerator: public std::list<BytePattern>
     protected:
         static void wildcard(BytePattern* bytepattern, size_t pos, size_t n);
         static std::string fullname(const std::string& prefix, const std::string& name);
+
+    private:
+        std::string m_outfolder;
 };
 
 #endif // PATTERNGENERATOR_H

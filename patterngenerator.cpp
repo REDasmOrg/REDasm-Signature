@@ -12,10 +12,11 @@
 using json = nlohmann::json;
 
 PatternGenerator::PatternGenerator(): std::list<BytePattern>() { }
+void PatternGenerator::setOutputFolder(const std::string &s) { m_outfolder = s; }
 
 bool PatternGenerator::saveAsJSON(const std::string &jsonfile)
 {
-    std::fstream fs(jsonfile + ".json", std::ios::out | std::ios::trunc);
+    std::fstream fs(outputFile(jsonfile + ".json"), std::ios::out | std::ios::trunc);
 
     if(!fs.is_open())
         return false;
@@ -72,7 +73,17 @@ bool PatternGenerator::saveAsSDB(const std::string &sdbfile)
         sigdb << sig;
     }
 
-    return sigdb.save(sdbfile + ".sdb");
+    return sigdb.save(outputFile(sdbfile + ".sdb"));
+}
+
+std::string PatternGenerator::outputFile(const std::string &filename) const
+{
+    std::string outfile = filename;
+
+    if(!m_outfolder.empty())
+        outfile = m_outfolder + REDasm::Runtime::rntDirSeparator + outfile;
+
+    return outfile;
 }
 
 void PatternGenerator::setFirstAndLast(REDasm::Signature *signature, const BytePattern& bytepattern) const
