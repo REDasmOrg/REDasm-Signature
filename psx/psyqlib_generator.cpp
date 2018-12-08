@@ -47,15 +47,18 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
 
         for(auto& psyqdefinition: psyqlink.definitions)
         {
+            if(psyqlink.sections.at(psyqdefinition.second.sectionnumber).name != ".text")
+                continue;
+
             std::cout << "Generating " << REDasm::quoted(psyqdefinition.second.name) << std::endl;
             const std::string& pattern = patterns[psyqdefinition.second.sectionnumber];
-            u64 length = pattern.size();
+            u64 length = pattern.size() - (psyqdefinition.second.offset * 2);
 
             auto it = offsets.find(psyqdefinition.second.offset);
             it++;
 
             if(it != offsets.end())
-                length = (psyqdefinition.second.offset + it->first) * 2;
+                length = (it->first - psyqdefinition.second.offset) * 2;
 
             this->pushPattern(fullname(prefix, psyqdefinition.second.name),
                               this->subPattern(pattern, psyqdefinition.second.offset * 2, length),
