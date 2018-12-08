@@ -4,6 +4,9 @@
 #include <iostream>
 #include <map>
 
+#define JR_RA "0800E003"
+#define MIPS_INSTRUCTION_SIZE_HEX (4 * 2)
+
 PsyQLibGenerator::PsyQLibGenerator(): PatternGenerator() { }
 std::string PsyQLibGenerator::name() const { return "PsyQ Lib Generator"; }
 
@@ -60,11 +63,21 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
             if(it != offsets.end())
                 length = (it->first - psyqdefinition.second.offset) * 2;
 
-            this->pushPattern(fullname(prefix, psyqdefinition.second.name),
-                              this->subPattern(pattern, psyqdefinition.second.offset * 2, length),
-                              REDasm::SymbolTypes::Function);
+            std::string subpattern = this->subPattern(pattern, psyqdefinition.second.offset * 2, length);
+            this->truncateAtDelaySlot(subpattern);
+            this->pushPattern(fullname(prefix, psyqdefinition.second.name), subpattern, REDasm::SymbolTypes::Function);
         }
     }
 
     return true;
+}
+
+void PsyQLibGenerator::truncateAtDelaySlot(std::string &subpattern) const
+{
+    size_t pos = subpattern.rfind(JR_RA);
+
+    if((pos == std::string::npos) || ((subpattern.size() - pos) <= MIPS_INSTRUCTION_SIZE_HEX))
+        return;
+
+    subpattern = subpattern.substr(0, pos + (MIPS_INSTRUCTION_SIZE_HEX * 2));
 }
