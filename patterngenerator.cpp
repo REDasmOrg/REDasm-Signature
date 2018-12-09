@@ -136,7 +136,7 @@ bool PatternGenerator::isBytePatternValid(const BytePattern &bytepattern) const
 
     if((wc / static_cast<float>(bytepattern.pattern.size())) >= 0.50)
     {
-        std::cout << "WARNING: Skipping unrealiable pattern" << std::endl;
+        std::cout << "WARNING: Skipping unrealiable pattern: " << REDasm::quoted(bytepattern.name) << std::endl;
         return false;
     }
 
