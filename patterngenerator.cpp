@@ -199,7 +199,7 @@ REDasm::Disassembler *PatternGenerator::createDisassembler(const char* assembler
         return NULL;
     }
 
-    address_t baseaddress = 1 << bits;
+    address_t baseaddress = 1u << (bits - 1);
     REDasm::BinaryFormat* format = new REDasm::BinaryFormat(buffer);
     format->build(assembler->name(), bits, 0, baseaddress, baseaddress, REDasm::SegmentTypes::Code);
     return new REDasm::Disassembler(assembler, format); // Takes ownership
