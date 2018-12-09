@@ -8,10 +8,12 @@ class PsyQLibGenerator: public PatternGenerator
     public:
         PsyQLibGenerator();
         virtual std::string name() const;
+        virtual bool disassemble(const std::string& pattern);
         virtual bool generate(const std::string& libfile, const std::string& prefix);
 
     private:
-        void truncateAtDelaySlot(std::string& subpattern) const;
+        void stopAtDelaySlot(std::string& subpattern) const;
+        void fixAddiu(std::string& subpattern) const;
 };
 
 #endif // PSYQLIB_GENERATOR_H

@@ -1,11 +1,11 @@
 #include "patterngenerator.h"
 #include <redasm/support/utils.h>
 #include <redasm/support/hash.h>
+#include <redasm/plugins/plugins.h>
+#include <redasm/formats/binary/binary.h>
 #include <fstream>
 #include <json.hpp>
 
-#define WILDCARD_PATTERN        "??"
-#define WILDCARD_CHARACTER      '?'
 #define PATTERN_OFFSET(offset)  (offset / 2)
 #define PATTERN_SIZE(size)      PATTERN_OFFSET(size)
 #define SIGNATURE_BYTES(pattern) PATTERN_SIZE(pattern.size())
@@ -62,6 +62,13 @@ bool PatternGenerator::saveAsSDB(const std::string &sdbfile)
     }
 
     return sigdb.save(outputFile(sdbfile + ".sdb"));
+}
+
+bool PatternGenerator::disassemble(const std::string &pattern)
+{
+    RE_UNUSED(pattern);
+    std::cout << "Disassembler is not supported" << std::endl;
+    return false;
 }
 
 std::string PatternGenerator::outputFile(const std::string &filename) const
@@ -174,6 +181,28 @@ std::string PatternGenerator::getChunk(const std::string &s, int offset, bool* w
     }
 
     return chunk;
+}
+
+REDasm::Disassembler *PatternGenerator::createDisassembler(const char* assemblerid, u32 bits, REDasm::Buffer& buffer)
+{
+    if(buffer.empty())
+    {
+        std::cout << "ERROR: Pattern is empty" << std::endl;
+        return NULL;
+    }
+
+    REDasm::AssemblerPlugin* assembler = REDasm::getAssembler(assemblerid);
+
+    if(!assembler)
+    {
+        std::cout << "ERROR: Invalid Assembler: " << REDasm::quoted(assemblerid) << std::endl;
+        return NULL;
+    }
+
+    address_t baseaddress = 1 << bits;
+    REDasm::BinaryFormat* format = new REDasm::BinaryFormat(buffer);
+    format->build(assembler->name(), bits, 0, baseaddress, baseaddress, REDasm::SegmentTypes::Code);
+    return new REDasm::Disassembler(assembler, format); // Takes ownership
 }
 
 void PatternGenerator::pushPattern(const std::string &name, const std::string &pattern, u32 symboltype) { this->push_back({ name, pattern, symboltype }); }

@@ -14,7 +14,7 @@
 class REDSigC
 {
     private:
-        enum { None = 0, JSONOutput = 1, SDBOutput = 2, AutoPrefix = 4 };
+        enum { None = 0, JSONOutput = 1, SDBOutput = 2, AutoPrefix = 4, Disassemble = 8 };
         typedef std::function<PatternGenerator*()> GeneratorCallback;
 
     public:
@@ -27,11 +27,12 @@ class REDSigC
         std::string inputFile(const std::string& filename) const;
         int showUsage() const;
         bool checkOptions();
+        bool checkOptionArg(std::string& arg, int& i) const;
 
     private:
         int m_options, m_argc;
         char** m_argv;
-        std::string m_prefix, m_outfile, m_infolder, m_outfolder;
+        std::string m_prefix, m_outfile, m_infolder, m_outfolder, m_disassemblesymbol;
         std::vector<std::string> m_infiles;
         std::list<GeneratorCallback> m_generators;
 };

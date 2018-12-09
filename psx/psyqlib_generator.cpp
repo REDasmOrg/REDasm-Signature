@@ -1,14 +1,33 @@
 #include "psyqlib_generator.h"
 #include "psyqlib.h"
+#include "../listingconsolerenderer.h"
 #include <redasm/support/utils.h>
 #include <iostream>
 #include <map>
 
 #define JR_RA "0800E003"
+#define ADDIU "1800BD27"
+#define NOP   "00000000"
 #define MIPS_INSTRUCTION_SIZE_HEX (4 * 2)
 
 PsyQLibGenerator::PsyQLibGenerator(): PatternGenerator() { }
 std::string PsyQLibGenerator::name() const { return "PsyQ Lib Generator"; }
+
+bool PsyQLibGenerator::disassemble(const std::string& pattern)
+{
+    REDasm::Buffer buffer = REDasm::bytes(pattern);
+    std::unique_ptr<REDasm::Disassembler> disassembler(this->createDisassembler("mips32", 32, buffer));
+
+    if(!disassembler)
+        return false;
+
+    std::unique_ptr<REDasm::Printer> printer(disassembler->createPrinter());
+    disassembler->disassemble();
+
+    ListingConsoleRenderer consolerenderer(disassembler.get());
+    consolerenderer.renderAll();
+    return true;
+}
 
 bool PsyQLibGenerator::generate(const std::string &infile, const std::string& prefix)
 {
@@ -53,7 +72,6 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
             if(psyqlink.sections.at(psyqdefinition.second.sectionnumber).name != ".text")
                 continue;
 
-            std::cout << "Generating " << REDasm::quoted(psyqdefinition.second.name) << std::endl;
             const std::string& pattern = patterns[psyqdefinition.second.sectionnumber];
             u64 length = pattern.size() - (psyqdefinition.second.offset * 2);
 
@@ -64,7 +82,8 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
                 length = (it->first - psyqdefinition.second.offset) * 2;
 
             std::string subpattern = this->subPattern(pattern, psyqdefinition.second.offset * 2, length);
-            this->truncateAtDelaySlot(subpattern);
+            this->fixAddiu(subpattern);
+            this->stopAtDelaySlot(subpattern);
             this->pushPattern(fullname(prefix, psyqdefinition.second.name), subpattern, REDasm::SymbolTypes::Function);
         }
     }
@@ -72,12 +91,26 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
     return true;
 }
 
-void PsyQLibGenerator::truncateAtDelaySlot(std::string &subpattern) const
+void PsyQLibGenerator::stopAtDelaySlot(std::string &subpattern) const
 {
     size_t pos = subpattern.rfind(JR_RA);
 
-    if((pos == std::string::npos) || ((subpattern.size() - pos) <= MIPS_INSTRUCTION_SIZE_HEX))
+    if(pos == std::string::npos)
         return;
 
-    subpattern = subpattern.substr(0, pos + (MIPS_INSTRUCTION_SIZE_HEX * 2));
+    if((subpattern.size() - pos) == MIPS_INSTRUCTION_SIZE_HEX)
+        subpattern += NOP;
+    else
+        subpattern = subpattern.substr(0, pos + (MIPS_INSTRUCTION_SIZE_HEX * 2));
+}
+
+void PsyQLibGenerator::fixAddiu(std::string &subpattern) const
+{
+    std::string lastinstruction = subpattern.substr(subpattern.size() - MIPS_INSTRUCTION_SIZE_HEX);
+
+    if(lastinstruction != ADDIU)
+        return;
+
+    size_t pos = subpattern.rfind(JR_RA);
+    subpattern.insert(pos, ADDIU).replace(subpattern.size() - MIPS_INSTRUCTION_SIZE_HEX, MIPS_INSTRUCTION_SIZE_HEX, NOP);
 }

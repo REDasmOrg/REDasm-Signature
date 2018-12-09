@@ -1,10 +1,14 @@
 #ifndef PATTERNGENERATOR_H
 #define PATTERNGENERATOR_H
 
+#define WILDCARD_PATTERN        "??"
+#define WILDCARD_CHARACTER      '?'
+
 #include <algorithm>
 #include <string>
 #include <list>
 #include <redasm/disassembler/types/symboltable.h>
+#include <redasm/disassembler/disassembler.h>
 #include <redasm/database/signaturedb.h>
 
 struct BytePattern
@@ -24,6 +28,7 @@ class PatternGenerator: public std::list<BytePattern>
 
     public:
         virtual std::string name() const = 0;
+        virtual bool disassemble(const std::string& pattern);
         virtual bool generate(const std::string& infile, const std::string& prefix = std::string()) = 0;
 
     private:
@@ -34,6 +39,7 @@ class PatternGenerator: public std::list<BytePattern>
         std::string getChunk(const std::string& s, int offset, bool *wildcard) const;
 
     protected:
+        REDasm::Disassembler *createDisassembler(const char *assemblerid, u32 bits, REDasm::Buffer &buffer);
         void pushPattern(const std::string& name, const std::string& subPattern, u32 symboltype);
 
     protected:

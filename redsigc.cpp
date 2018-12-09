@@ -1,6 +1,7 @@
 #include "redsigc.h"
 #include <redasm/database/signaturedb.h>
 #include <redasm/support/utils.h>
+#include <redasm/redasm_runtime.h>
 #include <iostream>
 #include <cstring>
 #include "../psx/psyqlib_generator.h"
@@ -10,12 +11,14 @@
 
 REDSigC::REDSigC(int argc, char **argv): m_options(REDSigC::None), m_argc(argc), m_argv(argv)
 {
+    REDasm::Runtime::syncMode(true);
+    REDasm::init();
     REGISTER_GENERATOR(PsyQLibGenerator);
 }
 
 int REDSigC::run()
 {
-    std::cout << "REDSigC Version " << REDSIGC_VERSION << std::endl;
+    std::cout << "REDasm Signature Compiler (Version " << REDSIGC_VERSION << ")" << std::endl;
 
     if((m_argc < 2) || !this->checkOptions())
         return this->showUsage();
@@ -38,6 +41,23 @@ int REDSigC::run()
 
             std::cout << "Invalid file " << m_infiles[i] << std::endl;
             return 3;
+        }
+
+        if(m_options & REDSigC::Disassemble)
+        {
+            for(auto it = patterngenerator->begin(); it != patterngenerator->end(); it++)
+            {
+                if(it->name != m_disassemblesymbol)
+                    continue;
+
+                std::cout << "Listing of " << REDasm::quoted(it->name) << std::endl;
+                std::string pattern = it->pattern;
+                std::replace(pattern.begin(), pattern.end(), WILDCARD_CHARACTER, 'F');
+                patterngenerator->disassemble(pattern);
+                break;
+            }
+
+            return 0;
         }
 
         if((m_options & REDSigC::JSONOutput) && !patterngenerator->saveAsJSON(m_outfile))
@@ -87,17 +107,17 @@ std::string REDSigC::inputFile(const std::string &filename) const
 
 int REDSigC::showUsage() const
 {
-    std::cout << "Usage REDSigC [options] inputfile" << std::endl;
+    std::cout << "Usage redsigc [options] inputfiles" << std::endl;
 
     std::cout << "Output:" << std::endl;
     std::cout << "\t -s SDB Output (Default)" << std::endl;
     std::cout << "\t -j JSON Output" << std::endl;
-    std::cout << "\t -o Output File" << std::endl;
-    std::cout << "\t -i Input Folder" << std::endl;
-    std::cout << "\t -d Output Folder" << std::endl;
+    std::cout << "\t -o [filename] Output File" << std::endl;
+    std::cout << "\t -i [folder] Input Folder" << std::endl;
 
     std::cout << std::endl << "Symbols:" << std::endl;
-    std::cout << "\t -p  Symbol Prefix" << std::endl;
+    std::cout << "\t -p [prefix]  Symbol Prefix" << std::endl;
+    std::cout << "\t -d [symbol]  Symbol Prefix" << std::endl;
     std::cout << "\t -ap Auto Prefix" << std::endl;
 
     std::cout << std::endl;
@@ -112,48 +132,35 @@ bool REDSigC::checkOptions()
     {
         if(!std::strcmp(m_argv[i], "-p"))
         {
-            if(i == (m_argc - 1))
+            if(!this->checkOptionArg(m_prefix, i))
                 return false;
-
-            i++;
-            char* prefixarg = m_argv[++i];
-
-            if(prefixarg[0] == '-')
-                return false;
-
-            m_prefix = prefixarg;
         }
         else if(!std::strcmp(m_argv[i], "-o"))
         {
-            i++;
-
-            if(i >= m_argc)
+            if(!this->checkOptionArg(m_outfile, i))
                 return false;
-
-            m_outfile = m_argv[i];
         }
         else if(!std::strcmp(m_argv[i], "-i"))
         {
-            i++;
-
-            if(i >= m_argc)
+            if(!this->checkOptionArg(m_infolder, i))
                 return false;
-
-            m_infolder = m_argv[i];
         }
         else if(!std::strcmp(m_argv[i], "-of"))
         {
-            i++;
-
-            if(i >= m_argc)
+            if(!this->checkOptionArg(m_outfolder, i))
                 return false;
-
-            m_outfolder = m_argv[i];
         }
         else if(m_argv[i][0] != '-')
         {
             if(i < m_argc)
                 m_infiles.push_back(m_argv[i]);
+        }
+        else if(!std::strcmp(m_argv[i], "-d"))
+        {
+            if(!this->checkOptionArg(m_disassemblesymbol, i))
+                return false;
+
+            m_options |= REDSigC::Disassemble;
         }
         else if(!std::strcmp(m_argv[i], "-ap"))
             m_options |= REDSigC::AutoPrefix;
@@ -175,4 +182,15 @@ bool REDSigC::checkOptions()
         m_outfile = DEFAULT_SIGNATURE_OUTPUT;
 
     return !m_infiles.empty();
+}
+
+bool REDSigC::checkOptionArg(std::string &arg, int &i) const
+{
+    i++;
+
+    if((i >= m_argc) || (m_argv[i][0] == '-'))
+        return false;
+
+    arg = m_argv[i];
+    return true;
 }
