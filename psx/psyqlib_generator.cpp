@@ -5,9 +5,9 @@
 #include <iostream>
 #include <map>
 
-#define JR_RA "0800E003"
-#define ADDIU "1800BD27"
-#define NOP   "00000000"
+#define JR_RA                     "0800E003"
+#define ADDIU_TAIL                "00BD27"
+#define NOP                       "00000000"
 #define MIPS_INSTRUCTION_SIZE_HEX (4 * 2)
 
 PsyQLibGenerator::PsyQLibGenerator(): PatternGenerator() { }
@@ -55,12 +55,20 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
 
         for(auto& psyqpatch : psyqlink.patches)
         {
+            if(psyqlink.sections.at(psyqpatch.patchsection).name != ".text")
+                continue;
+
             auto it = patterns.find(psyqpatch.patchsection);
 
             if(it == patterns.end())
                 continue;
 
-            wildcard(it->second, psyqpatch.offset, 2);
+            if(psyqpatch.type == PSYQPatchType::Jump)
+                wildcard(it->second, psyqpatch.offset, 3);
+            else if((psyqpatch.type == PSYQPatchType::Bss1) || (psyqpatch.type == PSYQPatchType::Bss2))
+                wildcard(it->second, psyqpatch.offset, 2);
+            else
+                std::cout << "Unhandled Patch Type: " << static_cast<size_t>(psyqpatch.type) << std::endl;
         }
 
         // Prepare offsets
@@ -82,7 +90,7 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
                 length = (it->first - psyqdefinition.second.offset) * 2;
 
             std::string subpattern = this->subPattern(pattern, psyqdefinition.second.offset * 2, length);
-            this->fixAddiu(subpattern);
+            this->fixTail(subpattern);
             this->stopAtDelaySlot(subpattern);
             this->pushPattern(fullname(prefix, psyqdefinition.second.name), subpattern, REDasm::SymbolTypes::Function);
         }
@@ -104,13 +112,16 @@ void PsyQLibGenerator::stopAtDelaySlot(std::string &subpattern) const
         subpattern = subpattern.substr(0, pos + (MIPS_INSTRUCTION_SIZE_HEX * 2));
 }
 
-void PsyQLibGenerator::fixAddiu(std::string &subpattern) const
+void PsyQLibGenerator::fixTail(std::string &subpattern) const
 {
-    std::string lastinstruction = subpattern.substr(subpattern.size() - MIPS_INSTRUCTION_SIZE_HEX);
+    size_t addiutailpos = subpattern.rfind(ADDIU_TAIL);
 
-    if(lastinstruction != ADDIU)
+    if(addiutailpos == std::string::npos)
         return;
 
+    addiutailpos -= 2;
+    std::string addiutail = subpattern.substr(addiutailpos);
     size_t pos = subpattern.rfind(JR_RA);
-    subpattern.insert(pos, ADDIU).replace(subpattern.size() - MIPS_INSTRUCTION_SIZE_HEX, MIPS_INSTRUCTION_SIZE_HEX, NOP);
+    subpattern.insert(pos, addiutail).replace(subpattern.size() - MIPS_INSTRUCTION_SIZE_HEX, MIPS_INSTRUCTION_SIZE_HEX, NOP);
+    subpattern += NOP;
 }

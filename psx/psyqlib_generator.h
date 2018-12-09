@@ -13,7 +13,7 @@ class PsyQLibGenerator: public PatternGenerator
 
     private:
         void stopAtDelaySlot(std::string& subpattern) const;
-        void fixAddiu(std::string& subpattern) const;
+        void fixTail(std::string& subpattern) const;
 };
 
 #endif // PSYQLIB_GENERATOR_H
