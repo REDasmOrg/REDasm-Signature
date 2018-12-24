@@ -4,26 +4,16 @@
 #include <redasm/plugins/plugins.h>
 #include <redasm/formats/binary/binary.h>
 #include <fstream>
-#include <json.hpp>
 
 #define PATTERN_OFFSET(offset)  (offset / 2)
 #define PATTERN_SIZE(size)      PATTERN_OFFSET(size)
 #define SIGNATURE_BYTES(pattern) PATTERN_SIZE(pattern.size())
 
-using json = nlohmann::json;
-
 PatternGenerator::PatternGenerator(): std::list<BytePattern>() { }
 void PatternGenerator::setOutputFolder(const std::string &s) { m_outfolder = s; }
 
-bool PatternGenerator::saveAsJSON(const std::string &jsonfile)
+bool PatternGenerator::saveAsJSON(json &patterns)
 {
-    std::fstream fs(outputFile(jsonfile + ".json"), std::ios::out | std::ios::trunc);
-
-    if(!fs.is_open())
-        return false;
-
-    auto patterns = json::array();
-
     for(auto it = this->begin(); it != this->end(); it++)
     {
         if(!this->isBytePatternValid(*it))
@@ -37,14 +27,11 @@ bool PatternGenerator::saveAsJSON(const std::string &jsonfile)
         patterns.push_back(patternobj);
     }
 
-    fs << patterns.dump(2);
     return true;
 }
 
-bool PatternGenerator::saveAsSDB(const std::string &sdbfile)
+bool PatternGenerator::saveAsSDB(REDasm::SignatureDB &sigdb)
 {
-    REDasm::SignatureDB sigdb;
-
     for(auto it = this->begin(); it != this->end(); it++)
     {
         if(!this->isBytePatternValid(*it))
@@ -61,7 +48,7 @@ bool PatternGenerator::saveAsSDB(const std::string &sdbfile)
         sigdb << sig;
     }
 
-    return sigdb.save(outputFile(sdbfile + ".sdb"));
+    return true;
 }
 
 bool PatternGenerator::disassemble(const std::string &pattern)
@@ -69,16 +56,6 @@ bool PatternGenerator::disassemble(const std::string &pattern)
     RE_UNUSED(pattern);
     std::cout << "Disassembler is not supported" << std::endl;
     return false;
-}
-
-std::string PatternGenerator::outputFile(const std::string &filename) const
-{
-    std::string outfile = filename;
-
-    if(!m_outfolder.empty())
-        outfile = m_outfolder + REDasm::Runtime::rntDirSeparator + outfile;
-
-    return outfile;
 }
 
 bool PatternGenerator::appendAllPatterns(REDasm::Signature *signature, const BytePattern &bytepattern) const

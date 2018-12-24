@@ -1,54 +1,89 @@
 #ifndef REDSIGC_H
 #define REDSIGC_H
 
-#define REDSIGC_VERSION 0.1
+#define REDSIGC_VERSION std::string("0.5")
 
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
+#include <deque>
 #include <list>
+#include <cxxopts.hpp>
 #include <redasm/redasm_api.h>
 #include "patterngenerator.h"
+
+struct SelectedOptions
+{
+    SelectedOptions(): flags(0) { }
+
+    int flags;
+    std::vector<std::string> defaultargs;
+    std::string prefix, symbol, infolder;
+
+    bool has(int flag) const { return flags & flag; }
+    const std::string& input() const { return defaultargs.front(); }
+    const std::string& output() const { return defaultargs.back(); }
+};
 
 class REDSigC
 {
     private:
-        enum { None = 0, JSONOutput = 1, SDBOutput = 2, AutoPrefix = 4, Disassemble = 8 };
-        typedef std::function<PatternGenerator*()> GeneratorCallback;
+        enum { None = 0, JSONOutput = 1, SDBOutput = 2, AutoPrefix = 4, Disassemble = 8, Folder = 16 };
+        typedef std::function<PatternGenerator*(const std::string&, const std::string&)> GeneratorCallback;
 
     public:
-        REDSigC(int argc, char **argv);
-        int run();
+        REDSigC();
+        int run(int argc, char **argv);
 
     private:
-        template<typename T> PatternGenerator* generateCallback();
         static std::string autoModuleName(std::string infile);
-        std::string inputFile(const std::string& filename) const;
-        int showUsage() const;
-        bool checkOptions();
-        bool checkOptionArg(std::string& arg, int& i) const;
+        PatternGenerator* getPatternGenerator(const std::string& infile, const std::string& prefix);
+        void getInputFiles(std::list<std::string>& infiles) const;
+        bool disassemblePattern(PatternGenerator* patterngenerator);
+        bool checkOptions(int argc, char **argv);
 
     private:
-        int m_options, m_argc;
-        char** m_argv;
-        std::string m_prefix, m_outfile, m_infolder, m_outfolder, m_disassemblesymbol;
-        std::vector<std::string> m_infiles;
+        template<typename T> static bool checkOption(const cxxopts::ParseResult& parseresult, const std::string& option, T* result = NULL);
+        template<typename T> PatternGenerator* generateCallback(const std::string& infile, const std::string& prefix);
+
+    private:
+        SelectedOptions m_options;
+        std::list< std::unique_ptr<PatternGenerator> > m_activegenerators;
         std::list<GeneratorCallback> m_generators;
 };
 
-template<typename T> PatternGenerator* REDSigC::generateCallback()
+template<typename T> PatternGenerator* REDSigC::generateCallback(const std::string& infile, const std::string &prefix)
 {
-    if(m_infiles.empty())
+    if(m_options.input().empty())
         return NULL;
 
     std::unique_ptr<T> p = std::make_unique<T>();
-    p->setOutputFolder(m_outfolder);
 
-    if(p->generate(this->inputFile(m_infiles[0]), (m_options & REDSigC::AutoPrefix) ? autoModuleName(m_infiles[0]) : m_prefix))
+    if(p->generate(infile, prefix))
         return p.release();
 
     return NULL;
+}
+
+template<typename T> bool REDSigC::checkOption(const cxxopts::ParseResult& parseresult, const std::string& option, T *result)
+{
+    try
+    {
+        if(!parseresult.count(option))
+            return false;
+
+        T opt = parseresult[option].as<T>();
+
+        if(result)
+            *result = opt;
+    }
+    catch(const cxxopts::OptionException& e)
+    {
+        std::cout << e.what() << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 #endif // REDSIGC_H

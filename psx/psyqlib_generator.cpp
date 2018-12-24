@@ -11,12 +11,12 @@
 #define MIPS_INSTRUCTION_SIZE_HEX (4 * 2)
 
 PsyQLibGenerator::PsyQLibGenerator(): PatternGenerator() { }
-std::string PsyQLibGenerator::name() const { return "PsyQ Lib Generator"; }
+std::string PsyQLibGenerator::name() const { return "PsyQ Library"; }
 
 bool PsyQLibGenerator::disassemble(const std::string& pattern)
 {
     REDasm::Buffer buffer = REDasm::bytes(pattern);
-    std::unique_ptr<REDasm::Disassembler> disassembler(this->createDisassembler("mips32", 32, buffer));
+    std::unique_ptr<REDasm::Disassembler> disassembler(this->createDisassembler("mips32le", 32, buffer));
 
     if(!disassembler)
         return false;

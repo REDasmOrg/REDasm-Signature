@@ -10,6 +10,9 @@
 #include <redasm/disassembler/types/symboltable.h>
 #include <redasm/disassembler/disassembler.h>
 #include <redasm/database/signaturedb.h>
+#include <json.hpp>
+
+using json = nlohmann::json;
 
 struct BytePattern
 {
@@ -23,8 +26,8 @@ class PatternGenerator: public std::list<BytePattern>
     public:
         PatternGenerator();
         void setOutputFolder(const std::string& s);
-        bool saveAsJSON(const std::string& jsonfile);
-        bool saveAsSDB(const std::string& sdbfile);
+        bool saveAsJSON(json& patterns);
+        bool saveAsSDB(REDasm::SignatureDB& sigdb);
 
     public:
         virtual std::string name() const = 0;
@@ -32,7 +35,6 @@ class PatternGenerator: public std::list<BytePattern>
         virtual bool generate(const std::string& infile, const std::string& prefix = std::string()) = 0;
 
     private:
-        std::string outputFile(const std::string& filename) const;
         bool appendAllPatterns(REDasm::Signature* signature, const BytePattern &bytepattern) const;
         bool isBytePatternValid(const BytePattern& bytepattern) const;
         u16 chunkChecksum(const std::string& chunk) const;

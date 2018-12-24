@@ -2,6 +2,6 @@
 
 int main(int argc, char* argv[])
 {
-    REDSigC redsigc(argc, argv);
-    return redsigc.run();
+    REDSigC redsigc;
+    return redsigc.run(argc, argv);
 }
