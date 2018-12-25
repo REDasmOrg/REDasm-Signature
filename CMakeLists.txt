@@ -12,17 +12,19 @@ set(SOURCES
     redsigc.cpp
     patterngenerator.cpp
     listingconsolerenderer.cpp
-    psx/psyqlib_generator.cpp
     psx/psyqlib.cpp)
 
 set(HEADERS
     redsigc.h
     patterngenerator.h
     listingconsolerenderer.h
-    psx/psyqlib_generator.h
     psx/psyqlib.h)
 
-add_executable(${PROJECT_NAME_LC} ${SOURCES} ${HEADERS})
+file(GLOB GENERATORS
+     generators/*.h
+     generators/*.cpp)
+
+add_executable(${PROJECT_NAME_LC} ${SOURCES} ${HEADERS} ${GENERATORS})
 add_dependencies(${PROJECT_NAME_LC} LibREDasm)
 
 if(WIN32)

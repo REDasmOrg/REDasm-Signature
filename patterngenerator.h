@@ -26,8 +26,8 @@ class PatternGenerator: public std::list<BytePattern>
     public:
         PatternGenerator();
         void setOutputFolder(const std::string& s);
-        bool saveAsJSON(json& patterns);
         bool saveAsSDB(REDasm::SignatureDB& sigdb);
+        bool saveAsJSON(json& patterns);
 
     public:
         virtual std::string name() const = 0;
@@ -36,13 +36,13 @@ class PatternGenerator: public std::list<BytePattern>
 
     private:
         bool appendAllPatterns(REDasm::Signature* signature, const BytePattern &bytepattern) const;
-        bool isBytePatternValid(const BytePattern& bytepattern) const;
         u16 chunkChecksum(const std::string& chunk) const;
         std::string getChunk(const std::string& s, int offset, bool *wildcard) const;
 
     protected:
         REDasm::Disassembler *createDisassembler(const char *assemblerid, u32 bits, REDasm::Buffer &buffer);
         void pushPattern(const std::string& name, const std::string& subPattern, u32 symboltype);
+        bool isBytePatternValid(const BytePattern& bytepattern) const;
 
     protected:
         static std::string subPattern(const std::string& pattern, size_t pos, size_t len);

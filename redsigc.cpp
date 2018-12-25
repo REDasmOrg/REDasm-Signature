@@ -1,22 +1,14 @@
 #include "redsigc.h"
-#include <redasm/database/signaturedb.h>
 #include <iostream>
-#include <cstring>
 #include <fstream>
 #include <dirent.h>
-#include "../psx/psyqlib_generator.h"
-
-#define DEFAULT_SIGNATURE_OUTPUT "signature"
-#define REGISTER_GENERATOR(T)    m_generators.push_back([&](const std::string& infile, const std::string& prefix) -> PatternGenerator* { \
-                                    return this->generateCallback<T>(infile, prefix); \
-                                 })
+#include "generators/generators.h"
 
 REDSigC::REDSigC()
 {
     REDasm::Runtime::syncMode(true);
     REDasm::init();
-
-    REGISTER_GENERATOR(PsyQLibGenerator);
+    Generators::init();
 }
 
 int REDSigC::run(int argc, char **argv)
@@ -35,7 +27,9 @@ int REDSigC::run(int argc, char **argv)
 
     for(const std::string& infile : infiles)
     {
-        auto patterngenerator = this->getPatternGenerator(infile, m_options.has(REDSigC::AutoPrefix) ? autoModuleName(infile) : m_options.prefix);
+        auto patterngenerator = Generators::getPattern(infile,
+                                                       m_options.has(REDSigC::AutoPrefix) ? autoModuleName(infile) : m_options.prefix,
+                                                       !m_options.has(REDSigC::Disassemble));
 
         if(!patterngenerator)
         {
@@ -53,14 +47,8 @@ int REDSigC::run(int argc, char **argv)
     {
         json patterns = json::array();
 
-        for(auto it = m_activegenerators.begin(); it != m_activegenerators.end(); it++)
-        {
-            if((*it)->saveAsJSON(patterns))
-                continue;
-
-            std::cout << "ERROR: Cannot save JSON pattern(s)" << std::endl;
+        if(!Generators::saveAsJSON(patterns))
             return 2;
-        }
 
         std::fstream fs(m_options.output() + ".json", std::ios::out | std::ios::trunc);
 
@@ -76,14 +64,8 @@ int REDSigC::run(int argc, char **argv)
     {
         REDasm::SignatureDB signaturedb;
 
-        for(auto it = m_activegenerators.begin(); it != m_activegenerators.end(); it++)
-        {
-            if((*it)->saveAsSDB(signaturedb))
-                continue;
-
-            std::cout << "ERROR: Cannot save SDB pattern(s)" << std::endl;
+        if(!Generators::saveAsSDB(signaturedb))
             return 2;
-        }
 
         if(!signaturedb.save(m_options.output() + ".sdb"))
         {
@@ -111,33 +93,6 @@ std::string REDSigC::autoModuleName(std::string infile)
         infile.erase(dotidx);
 
     return infile;
-}
-
-PatternGenerator *REDSigC::getPatternGenerator(const std::string &infile, const std::string& prefix)
-{
-    for(auto it = m_activegenerators.begin(); it != m_activegenerators.end(); it++)
-    {
-        if(!(*it)->generate(infile, prefix))
-            continue;
-
-        if(!m_options.has(REDSigC::Disassemble))
-            std::cout << (*it)->name() << ": " << infile << std::endl;
-
-        return it->get();
-    }
-
-    for(auto it = m_generators.begin(); it != m_generators.end(); it++)
-    {
-        PatternGenerator* patterngenerator = (*it)(infile, prefix);
-
-        if(!patterngenerator)
-            continue;
-
-        m_activegenerators.emplace_back(patterngenerator);
-        return m_activegenerators.back().get();
-    }
-
-    return NULL;
 }
 
 void REDSigC::getInputFiles(std::list<std::string> &infiles) const

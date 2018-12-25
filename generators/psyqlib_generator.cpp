@@ -1,5 +1,5 @@
 #include "psyqlib_generator.h"
-#include "psyqlib.h"
+#include "../psx/psyqlib.h"
 #include "../listingconsolerenderer.h"
 #include <redasm/support/utils.h>
 #include <iostream>
