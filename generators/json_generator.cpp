@@ -10,9 +10,9 @@ bool JSONGenerator::disassemble(const std::string &pattern)
     return true;
 }
 
-bool JSONGenerator::generate(const std::string &libfile, const std::string &prefix)
+bool JSONGenerator::generate(const std::string &infile, const std::string &prefix)
 {
-    std::ifstream ifs(libfile);
+    std::ifstream ifs(infile);
 
     if(!ifs.is_open())
         return false;
