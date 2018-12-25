@@ -15,7 +15,7 @@ struct SelectedOptions
 
     int flags;
     std::vector<std::string> defaultargs;
-    std::string prefix, symbol, infolder;
+    std::string prefix, suffix, symbol, infolder;
 
     bool has(int flag) const { return flags & flag; }
     const std::string& input() const { return defaultargs.front(); }

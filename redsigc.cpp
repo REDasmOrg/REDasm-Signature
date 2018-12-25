@@ -29,7 +29,7 @@ int REDSigC::run(int argc, char **argv)
     {
         auto patterngenerator = Generators::getPattern(infile,
                                                        m_options.has(REDSigC::AutoPrefix) ? autoModuleName(infile) : m_options.prefix,
-                                                       !m_options.has(REDSigC::Disassemble));
+                                                       m_options.suffix, !m_options.has(REDSigC::Disassemble));
 
         if(!patterngenerator)
         {
@@ -144,14 +144,14 @@ bool REDSigC::checkOptions(int argc, char **argv)
     cxxopts::Options options("redsigc", "REDasm Signature Compiler (Version " + REDSIGC_VERSION + ")");
 
     options.add_options("Output")
-            ("s, sdb", "SDB Output")
             ("j, json", "JSON Output")
             ("f, folder", "Input Folder", cxxopts::value<std::string>(), "path");
 
     options.add_options("Symbols")
             ("a, autoprefix", "Auto Prefix")
             ("d, disasm", "Disassemble Symbol", cxxopts::value<std::string>(), "symbol")
-            ("p, prefix", "Prefix", cxxopts::value<std::string>(), "name");
+            ("p, prefix", "Prefix", cxxopts::value<std::string>(), "name")
+            ("s, suffix", "Suffix", cxxopts::value<std::string>(), "name");
 
     options.add_options()
             ("defaultargs", std::string(), cxxopts::value< std::vector<std::string> >());
@@ -184,6 +184,7 @@ bool REDSigC::checkOptions(int argc, char **argv)
             m_options.flags |= REDSigC::Disassemble;
 
         REDSigC::checkOption(result, "p", &m_options.prefix);
+        REDSigC::checkOption(result, "s", &m_options.suffix);
         return true;
     }
 

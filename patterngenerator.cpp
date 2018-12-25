@@ -11,6 +11,8 @@
 #define SIGNATURE_BYTES(pattern) PATTERN_SIZE(pattern.size())
 
 PatternGenerator::PatternGenerator(): std::list<BytePattern>() { }
+void PatternGenerator::setPrefix(const std::string &prefix) { m_prefix = prefix; }
+void PatternGenerator::setSuffix(const std::string &suffix) { m_suffix = suffix; }
 
 bool PatternGenerator::saveAsJSON(json &patterns)
 {
@@ -172,6 +174,16 @@ std::string PatternGenerator::getChunk(const std::string &s, int offset, bool* w
     return chunk;
 }
 
+std::string PatternGenerator::fullName(const std::string &name) const
+{
+    std::string fullname = name;
+
+    if(!m_prefix.empty())
+        fullname = m_prefix + "." + fullname;
+
+    return fullname + m_suffix;
+}
+
 REDasm::Disassembler *PatternGenerator::createDisassembler(const std::string& assemblerid, u32 bits, REDasm::Buffer& buffer)
 {
     if(buffer.empty())
@@ -196,7 +208,7 @@ REDasm::Disassembler *PatternGenerator::createDisassembler(const std::string& as
 
 void PatternGenerator::pushPattern(const std::string &name, const std::string &pattern, const std::string& assembler, u32 bits, u32 symboltype)
 {
-    this->push_back({ name, pattern, assembler, bits, symboltype });
+    this->push_back({ this->fullName(name), pattern, assembler, bits, symboltype });
 }
 
 std::string PatternGenerator::subPattern(const std::string &pattern, size_t pos, size_t len) { return pattern.substr(pos, len); }
@@ -214,5 +226,3 @@ void PatternGenerator::wildcard(std::string &pattern, size_t pos, size_t n)
     for(size_t i = 0; i < n; i++, pos += 2)
         pattern.replace(pos, 2, WILDCARD_PATTERN);
 }
-
-std::string PatternGenerator::fullname(const std::string &prefix, const std::string &name) { return prefix.empty() ? name : (prefix + "." + name); }

@@ -8,7 +8,7 @@ class JSONGenerator: public PatternGenerator
     public:
         JSONGenerator();
         virtual std::string name() const;
-        virtual bool generate(const std::string& infile, const std::string& prefix);
+        virtual bool generate(const std::string& infile);
 
     private:
         template<typename T> bool checkKey(const json& pattern, const std::string& key, T& result) const;

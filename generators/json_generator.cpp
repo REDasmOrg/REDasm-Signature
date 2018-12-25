@@ -4,7 +4,7 @@
 JSONGenerator::JSONGenerator(): PatternGenerator() { }
 std::string JSONGenerator::name() const { return "JSON Pattern"; }
 
-bool JSONGenerator::generate(const std::string &infile, const std::string &prefix)
+bool JSONGenerator::generate(const std::string &infile)
 {
     std::ifstream ifs(infile);
 

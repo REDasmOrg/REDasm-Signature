@@ -4,8 +4,8 @@
 #define WRAP_TO_STRING(...)   #__VA_ARGS__
 #define GENERATOR(generator)  WRAP_TO_STRING(../generators/generator##_generator.h)
 
-#define REGISTER_GENERATOR(T) Generators::registered.push_back([&](const std::string& infile, const std::string& prefix) -> PatternGenerator* { \
-                                 return Generators::generateCallback<T##Generator>(infile, prefix); \
+#define REGISTER_GENERATOR(T) Generators::registered.push_back([&](const std::string& infile, const std::string& prefix, const std::string& suffix) -> PatternGenerator* { \
+                                 return Generators::generateCallback<T##Generator>(infile, prefix, suffix); \
                               })
 
 /* *** Generators *** */
@@ -24,11 +24,11 @@ void Generators::init()
     REGISTER_GENERATOR(JSON);
 }
 
-PatternGenerator *Generators::getPattern(const std::string &infile, const std::string &prefix, bool verbose)
+PatternGenerator *Generators::getPattern(const std::string &infile, const std::string &prefix, const std::string &suffix, bool verbose)
 {
     for(auto it = active.begin(); it != active.end(); it++)
     {
-        if(!(*it)->generate(infile, prefix))
+        if(!(*it)->generate(infile))
             continue;
 
         if(verbose)
@@ -39,7 +39,7 @@ PatternGenerator *Generators::getPattern(const std::string &infile, const std::s
 
     for(auto it = registered.begin(); it != registered.end(); it++)
     {
-        PatternGenerator* patterngenerator = (*it)(infile, prefix);
+        PatternGenerator* patterngenerator = (*it)(infile, prefix, suffix);
 
         if(!patterngenerator)
             continue;

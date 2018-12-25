@@ -12,7 +12,7 @@
 PsyQLibGenerator::PsyQLibGenerator(): PatternGenerator() { }
 std::string PsyQLibGenerator::name() const { return "PsyQ Library"; }
 
-bool PsyQLibGenerator::generate(const std::string &infile, const std::string& prefix)
+bool PsyQLibGenerator::generate(const std::string &infile)
 {
     PSYQLib psyqlib(infile);
 
@@ -75,7 +75,7 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
             std::string subpattern = this->subPattern(pattern, psyqdefinition.second.offset * 2, length);
             this->fixTail(subpattern);
             this->stopAtDelaySlot(subpattern);
-            this->pushPattern(fullname(prefix, psyqdefinition.second.name), subpattern, "mips32le", 32, REDasm::SymbolTypes::Function);
+            this->pushPattern(psyqdefinition.second.name, subpattern, "mips32le", 32, REDasm::SymbolTypes::Function);
         }
     }
 

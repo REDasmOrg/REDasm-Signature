@@ -8,15 +8,15 @@
 #include <redasm/database/signaturedb.h>
 #include "../patterngenerator.h"
 
-typedef std::function<PatternGenerator*(const std::string&, const std::string&)> GeneratorCallback;
+typedef std::function<PatternGenerator*(const std::string&, const std::string&, const std::string&)> GeneratorCallback;
 
 struct Generators
 {
     Generators() = delete;
     Generators(const Generators&) = delete;
 
-    template<typename T> static PatternGenerator* generateCallback(const std::string& infile, const std::string &prefix);
-    static PatternGenerator* getPattern(const std::string& infile, const std::string& prefix, bool verbose = true);
+    template<typename T> static PatternGenerator* generateCallback(const std::string& infile, const std::string& prefix, const std::string& suffix);
+    static PatternGenerator* getPattern(const std::string& infile, const std::string& prefix, const std::string& suffix, bool verbose = true);
     static bool saveAsSDB(REDasm::SignatureDB& sigdb);
     static bool saveAsJSON(json& patterns);
     static void init();
@@ -25,11 +25,13 @@ struct Generators
     static std::list<GeneratorCallback> registered;
 };
 
-template<typename T> PatternGenerator* Generators::generateCallback(const std::string& infile, const std::string &prefix)
+template<typename T> PatternGenerator* Generators::generateCallback(const std::string& infile, const std::string& prefix, const std::string& suffix)
 {
     std::unique_ptr<T> p = std::make_unique<T>();
+    p->setPrefix(prefix);
+    p->setSuffix(suffix);
 
-    if(p->generate(infile, prefix))
+    if(p->generate(infile))
         return p.release();
 
     return NULL;
