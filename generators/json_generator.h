@@ -11,10 +11,10 @@ class JSONGenerator: public PatternGenerator
         virtual bool generate(const std::string& infile, const std::string& prefix);
 
     private:
-        template<typename T> bool checkKey(json& pattern, const std::string& key, T& result) const;
+        template<typename T> bool checkKey(const json& pattern, const std::string& key, T& result) const;
 };
 
-template<typename T> bool JSONGenerator::checkKey(json& pattern, const std::string& key, T& result) const
+template<typename T> bool JSONGenerator::checkKey(const json &pattern, const std::string& key, T& result) const
 {
     auto it = pattern.find(key);
 

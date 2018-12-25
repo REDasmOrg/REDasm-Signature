@@ -29,16 +29,16 @@ bool JSONGenerator::generate(const std::string &infile, const std::string &prefi
     {
         BytePattern bytepattern;
 
-        if(!this->checkKey(patterns, "assembler", bytepattern.assembler) || !this->checkKey(patterns, "bits", bytepattern.bits) ||
-                                                                            !this->checkKey(patterns, "pattern", bytepattern.pattern))
+        if(!this->checkKey(pattern, "assembler", bytepattern.assembler) || !this->checkKey(pattern, "bits", bytepattern.bits) ||
+                                                                           !this->checkKey(pattern, "pattern", bytepattern.pattern))
         {
             skipped++;
             continue;
         }
 
 
-        if(!this->checkKey(patterns, "name", bytepattern.name) || !this->checkKey(patterns, "symboltype", bytepattern.symboltype) ||
-                                                                  !this->isBytePatternValid(bytepattern))
+        if(!this->checkKey(pattern, "name", bytepattern.name) || !this->checkKey(pattern, "symboltype", bytepattern.symboltype) ||
+                                                                 !this->isBytePatternValid(bytepattern))
         {
             skipped++;
             continue;
