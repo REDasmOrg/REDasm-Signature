@@ -16,32 +16,30 @@ using json = nlohmann::json;
 
 struct BytePattern
 {
-    std::string name;
-    std::string pattern;
-    u32 symboltype;
+    std::string name, pattern, assembler;
+    u32 bits, symboltype;
 };
 
 class PatternGenerator: public std::list<BytePattern>
 {
     public:
         PatternGenerator();
-        void setOutputFolder(const std::string& s);
+        bool disassemble(const BytePattern& bytepattern);
         bool saveAsSDB(REDasm::SignatureDB& sigdb);
         bool saveAsJSON(json& patterns);
 
     public:
         virtual std::string name() const = 0;
-        virtual bool disassemble(const std::string& pattern);
         virtual bool generate(const std::string& infile, const std::string& prefix = std::string()) = 0;
 
     private:
         bool appendAllPatterns(REDasm::Signature* signature, const BytePattern &bytepattern) const;
         u16 chunkChecksum(const std::string& chunk) const;
         std::string getChunk(const std::string& s, int offset, bool *wildcard) const;
+        REDasm::Disassembler *createDisassembler(const std::string &assemblerid, u32 bits, REDasm::Buffer &buffer);
 
     protected:
-        REDasm::Disassembler *createDisassembler(const char *assemblerid, u32 bits, REDasm::Buffer &buffer);
-        void pushPattern(const std::string& name, const std::string& subPattern, u32 symboltype);
+        void pushPattern(const std::string& name, const std::string& pattern, const std::string& assembler, u32 bits, u32 symboltype);
         bool isBytePatternValid(const BytePattern& bytepattern) const;
 
     protected:

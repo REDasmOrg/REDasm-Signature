@@ -132,7 +132,7 @@ bool REDSigC::disassemblePattern(PatternGenerator *patterngenerator)
 
         std::cout << "Listing of " << REDasm::quoted(it->name) << std::endl;
         std::replace(it->pattern.begin(), it->pattern.end(), WILDCARD_CHARACTER, 'F');
-        patterngenerator->disassemble(it->pattern);
+        patterngenerator->disassemble(*it);
         return true;
     }
 

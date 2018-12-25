@@ -1,6 +1,5 @@
 #include "psyqlib_generator.h"
 #include "../psx/psyqlib.h"
-#include "../listingconsolerenderer.h"
 #include <redasm/support/utils.h>
 #include <iostream>
 #include <map>
@@ -12,22 +11,6 @@
 
 PsyQLibGenerator::PsyQLibGenerator(): PatternGenerator() { }
 std::string PsyQLibGenerator::name() const { return "PsyQ Library"; }
-
-bool PsyQLibGenerator::disassemble(const std::string& pattern)
-{
-    REDasm::Buffer buffer = REDasm::bytes(pattern);
-    std::unique_ptr<REDasm::Disassembler> disassembler(this->createDisassembler("mips32le", 32, buffer));
-
-    if(!disassembler)
-        return false;
-
-    std::unique_ptr<REDasm::Printer> printer(disassembler->createPrinter());
-    disassembler->disassemble();
-
-    ListingConsoleRenderer consolerenderer(disassembler.get());
-    consolerenderer.renderAll();
-    return true;
-}
 
 bool PsyQLibGenerator::generate(const std::string &infile, const std::string& prefix)
 {
@@ -92,7 +75,7 @@ bool PsyQLibGenerator::generate(const std::string &infile, const std::string& pr
             std::string subpattern = this->subPattern(pattern, psyqdefinition.second.offset * 2, length);
             this->fixTail(subpattern);
             this->stopAtDelaySlot(subpattern);
-            this->pushPattern(fullname(prefix, psyqdefinition.second.name), subpattern, REDasm::SymbolTypes::Function);
+            this->pushPattern(fullname(prefix, psyqdefinition.second.name), subpattern, "mips32le", 32, REDasm::SymbolTypes::Function);
         }
     }
 

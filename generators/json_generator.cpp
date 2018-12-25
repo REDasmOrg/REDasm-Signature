@@ -4,12 +4,6 @@
 JSONGenerator::JSONGenerator(): PatternGenerator() { }
 std::string JSONGenerator::name() const { return "JSON Pattern"; }
 
-bool JSONGenerator::disassemble(const std::string &pattern)
-{
-    std::cout << pattern << std::endl;
-    return true;
-}
-
 bool JSONGenerator::generate(const std::string &infile, const std::string &prefix)
 {
     std::ifstream ifs(infile);
@@ -18,7 +12,13 @@ bool JSONGenerator::generate(const std::string &infile, const std::string &prefi
         return false;
 
     json patterns;
-    ifs >> patterns;
+
+    try {
+        ifs >> patterns;
+    }
+    catch(std::invalid_argument&) {
+        return false;
+    }
 
     if(patterns.empty())
         return false;
@@ -28,35 +28,17 @@ bool JSONGenerator::generate(const std::string &infile, const std::string &prefi
     for(const auto& pattern : patterns)
     {
         BytePattern bytepattern;
-        auto it = pattern.find("pattern");
 
-        if(it == pattern.end())
+        if(!this->checkKey(patterns, "assembler", bytepattern.assembler) || !this->checkKey(patterns, "bits", bytepattern.bits) ||
+                                                                            !this->checkKey(patterns, "pattern", bytepattern.pattern))
         {
             skipped++;
             continue;
         }
 
-        bytepattern.pattern = *it;
-        it = pattern.find("name");
 
-        if(it == pattern.end())
-        {
-            skipped++;
-            continue;
-        }
-
-        bytepattern.name = *it;
-        it = pattern.find("name");
-
-        if(it == pattern.end())
-        {
-            skipped++;
-            continue;
-        }
-
-        bytepattern.symboltype = *it;
-
-        if(!this->isBytePatternValid(bytepattern))
+        if(!this->checkKey(patterns, "name", bytepattern.name) || !this->checkKey(patterns, "symboltype", bytepattern.symboltype) ||
+                                                                  !this->isBytePatternValid(bytepattern))
         {
             skipped++;
             continue;
