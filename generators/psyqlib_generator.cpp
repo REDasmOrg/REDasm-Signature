@@ -60,6 +60,9 @@ bool PsyQLibGenerator::generate(const std::string &infile)
 
         for(auto& psyqdefinition: psyqlink.definitions)
         {
+            if(psyqlink.sections.find(psyqdefinition.second.sectionnumber) == psyqlink.sections.end())
+                continue;
+
             if(psyqlink.sections.at(psyqdefinition.second.sectionnumber).name != ".text")
                 continue;
 
