@@ -111,7 +111,7 @@ void REDSigC::getInputFiles(std::list<std::string> &infiles) const
 
         while((de = readdir(dir)) != NULL)
         {
-            if((de->d_name[0] == '.') || !std::strcmp(de->d_name, ".") || !std::strcmp(de->d_name, ".."))
+            if((de->d_name[0] == '.') || (de->d_type == DT_DIR))
                 continue;
 
             infiles.push_back(REDasm::makePath(m_options.input(), de->d_name));
