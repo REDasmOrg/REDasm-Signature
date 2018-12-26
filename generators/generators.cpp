@@ -44,6 +44,9 @@ PatternGenerator *Generators::getPattern(const std::string &infile, const std::s
         if(!patterngenerator)
             continue;
 
+        if(verbose)
+            std::cout << patterngenerator->name() << ": " << infile << std::endl;
+
         active.emplace_back(patterngenerator);
         return active.back().get();
     }
