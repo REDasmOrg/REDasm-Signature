@@ -6,7 +6,7 @@
 
 REDSigC::REDSigC()
 {
-    REDasm::Runtime::syncMode(true);
+    REDasm::Runtime::sync(true);
     REDasm::init();
     Generators::init();
 }
@@ -175,6 +175,7 @@ bool REDSigC::checkOptions(int argc, char **argv)
         {
             m_options.flags |= REDSigC::Folder;
             m_options.defaultargs.insert(m_options.defaultargs.begin(), m_options.infolder);
+            REDasm::Runtime::cwd(m_options.infolder);
         }
 
         if(REDSigC::checkOption<bool>(result, "a"))
