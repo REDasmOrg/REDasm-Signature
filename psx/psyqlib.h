@@ -8,7 +8,7 @@
 #include <deque>
 #include <fstream>
 #include <list>
-#include <redasm/redasm_types.h>
+#include <redasm/types/base_types.h>
 
 #define PSYQ_MODULE_NAME_LENGTH 8
 #define PSYQ_LIB_SIGNATURE_SIZE 3

@@ -6,8 +6,8 @@
 
 REDSigC::REDSigC()
 {
-    REDasm::Runtime::sync(true);
-    REDasm::init();
+    REDasm::Context::sync(true);
+    REDasm::init({ });
     Generators::init();
 }
 
@@ -81,7 +81,7 @@ std::string REDSigC::autoModuleName(std::string infile)
 {
     // Remove directory if present.
     // Do this before extension removal in case directory has a period character.
-    size_t lastdirsepidx = infile.find_last_of(REDasm::Runtime::rntDirSeparator);
+    size_t lastdirsepidx = infile.find_last_of(REDasm::Context::dirSeparator);
 
     if(lastdirsepidx != std::string::npos)
         infile.erase(0, lastdirsepidx + 1);
@@ -175,7 +175,7 @@ bool REDSigC::checkOptions(int argc, char **argv)
         {
             m_options.flags |= REDSigC::Folder;
             m_options.defaultargs.insert(m_options.defaultargs.begin(), m_options.infolder);
-            REDasm::Runtime::cwd(m_options.infolder);
+            REDasm::Context::cwd(m_options.infolder);
         }
 
         if(REDSigC::checkOption<bool>(result, "a"))

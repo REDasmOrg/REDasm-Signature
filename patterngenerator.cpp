@@ -3,7 +3,7 @@
 #include <redasm/support/utils.h>
 #include <redasm/support/hash.h>
 #include <redasm/plugins/plugins.h>
-#include <redasm/formats/binary/binary.h>
+#include <redasm/loaders/binary/binary.h>
 #include <fstream>
 
 #define PATTERN_OFFSET(offset)  (offset / 2)
@@ -58,8 +58,8 @@ bool PatternGenerator::saveAsSDB(REDasm::SignatureDB &sigdb)
 
 bool PatternGenerator::disassemble(const BytePattern& bytepattern)
 {
-    REDasm::Buffer buffer = REDasm::bytes(bytepattern.pattern);
-    std::unique_ptr<REDasm::Disassembler> disassembler(this->createDisassembler(bytepattern.assembler.c_str(), bytepattern.bits, buffer));
+    REDasm::MemoryBuffer buffer = REDasm::bytes(bytepattern.pattern);
+    std::unique_ptr<REDasm::Disassembler> disassembler(this->createDisassembler(bytepattern.assembler.c_str(), bytepattern.bits, &buffer));
 
     if(!disassembler)
         return false;
@@ -139,7 +139,7 @@ u16 PatternGenerator::chunkChecksum(const std::string &chunk) const
     std::vector<u8> bytes(SIGNATURE_BYTES(chunk));
 
     for(size_t i = 0, j = 0; i < chunk.size(); i += 2, j++)
-        bytes[j] = REDasm::byte(chunk, i);
+        REDasm::byte(chunk, &bytes[j], i);
 
     return REDasm::Hash::crc16(bytes.data(), bytes.size());
 }
@@ -184,26 +184,26 @@ std::string PatternGenerator::fullName(const std::string &name) const
     return fullname + m_suffix;
 }
 
-REDasm::Disassembler *PatternGenerator::createDisassembler(const std::string& assemblerid, u32 bits, REDasm::Buffer& buffer)
+REDasm::Disassembler *PatternGenerator::createDisassembler(const std::string& assemblerid, u32 bits, REDasm::AbstractBuffer *buffer)
 {
-    if(buffer.empty())
+    if(buffer->empty())
     {
         std::cout << "ERROR: Pattern is empty" << std::endl;
         return NULL;
     }
 
-    REDasm::AssemblerPlugin* assembler = REDasm::getAssembler(assemblerid.c_str());
+    const REDasm::AssemblerPlugin_Entry* assemblerentry = REDasm::getAssembler(assemblerid);
 
-    if(!assembler)
+    if(!assemblerentry)
     {
         std::cout << "ERROR: Invalid Assembler: " << REDasm::quoted(assemblerid) << std::endl;
         return NULL;
     }
 
     address_t baseaddress = 1u << (bits - 1);
-    REDasm::BinaryFormat* format = new REDasm::BinaryFormat(buffer);
-    format->build(assembler->name(), bits, 0, baseaddress, baseaddress, REDasm::SegmentTypes::Code);
-    return new REDasm::Disassembler(assembler, format); // Takes ownership
+    REDasm::BinaryLoader* loader = new REDasm::BinaryLoader(buffer);
+    loader->build(assemblerentry->name(), 0, baseaddress, baseaddress);
+    return new REDasm::Disassembler(assemblerentry->init(), loader); // Takes ownership
 }
 
 void PatternGenerator::pushPattern(const std::string &name, const std::string &pattern, const std::string& assembler, u32 bits, u32 symboltype)

@@ -39,7 +39,7 @@ class PatternGenerator: public std::list<BytePattern>
         u16 chunkChecksum(const std::string& chunk) const;
         std::string getChunk(const std::string& s, int offset, bool *wildcard) const;
         std::string fullName(const std::string& name) const;
-        REDasm::Disassembler *createDisassembler(const std::string &assemblerid, u32 bits, REDasm::Buffer &buffer);
+        REDasm::Disassembler *createDisassembler(const std::string &assemblerid, u32 bits, REDasm::AbstractBuffer *buffer);
 
     protected:
         void pushPattern(const std::string& name, const std::string& pattern, const std::string& assembler, u32 bits, u32 symboltype);

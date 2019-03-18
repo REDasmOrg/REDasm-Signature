@@ -1,5 +1,5 @@
 #include "listingconsolerenderer.h"
-#include <redasm/plugins/format.h>
+#include <redasm/plugins/loader.h>
 #include <iostream>
 
 ListingConsoleRenderer::ListingConsoleRenderer(REDasm::DisassemblerAPI *disassembler): REDasm::ListingRenderer(disassembler) { }
@@ -13,6 +13,6 @@ void ListingConsoleRenderer::renderLine(const REDasm::RendererLine &rl)
         return;
 
     REDasm::InstructionPtr instruction = m_document->instruction(item->address);
-    REDasm::BufferRef buffer = m_disassembler->format()->buffer(instruction->address);
-    std::cout << rl.text << "\t; " << REDasm::hexstring(buffer, instruction->size) << std::endl;
+    REDasm::BufferView view = m_disassembler->loader()->view(instruction->address);
+    std::cout << rl.text << "\t; " << REDasm::hexstring(view, instruction->size) << std::endl;
 }
