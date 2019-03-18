@@ -54,28 +54,28 @@ PatternGenerator *Generators::getPattern(const std::string &infile, const std::s
     return NULL;
 }
 
-bool Generators::saveAsSDB(REDasm::SignatureDB &sigdb)
+bool Generators::saveAsJSON(REDasm::SignatureDB &sigdb)
 {
     for(auto it = active.begin(); it != active.end(); it++)
     {
-        if((*it)->saveAsSDB(sigdb))
+        if((*it)->saveAsJSON(sigdb))
             continue;
 
-        std::cout << "ERROR: Cannot save SDB pattern(s)" << std::endl;
+        std::cout << "ERROR: Cannot save JSON pattern(s)" << std::endl;
         return false;
     }
 
     return true;
 }
 
-bool Generators::saveAsJSON(json &patterns)
+bool Generators::saveAsJSONSource(json &patterns)
 {
     for(auto it = active.begin(); it != active.end(); it++)
     {
-        if((*it)->saveAsJSON(patterns))
+        if((*it)->saveAsJSONSource(patterns))
             continue;
 
-        std::cout << "ERROR: Cannot save JSON pattern(s)" << std::endl;
+        std::cout << "ERROR: Cannot save JSON Source pattern(s)" << std::endl;
         return false;
     }
 

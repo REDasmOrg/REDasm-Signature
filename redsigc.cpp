@@ -43,14 +43,14 @@ int REDSigC::run(int argc, char **argv)
             return 0;
     }
 
-    if(m_options.has(REDSigC::JSONOutput))
+    if(m_options.has(REDSigC::JSONSourceOutput))
     {
         json patterns = json::array();
 
-        if(!Generators::saveAsJSON(patterns))
+        if(!Generators::saveAsJSONSource(patterns))
             return 2;
 
-        std::fstream fs(m_options.output() + ".json", std::ios::out | std::ios::trunc);
+        std::fstream fs(m_options.output(), std::ios::out | std::ios::trunc);
 
         if(!fs.is_open())
         {
@@ -60,14 +60,14 @@ int REDSigC::run(int argc, char **argv)
 
         fs << patterns.dump(2);
     }
-    else if(m_options.has(REDSigC::SDBOutput))
+    else
     {
         REDasm::SignatureDB signaturedb;
 
-        if(!Generators::saveAsSDB(signaturedb))
+        if(!Generators::saveAsJSON(signaturedb))
             return 2;
 
-        if(!signaturedb.save(m_options.output() + ".sdb"))
+        if(!signaturedb.save(m_options.output()))
         {
             std::cout << "ERROR: Cannot write SDB file" << std::endl;
             return 2;
@@ -144,7 +144,7 @@ bool REDSigC::checkOptions(int argc, char **argv)
     cxxopts::Options options("redsigc", "REDasm Signature Compiler (Version " + REDSIGC_VERSION + ")");
 
     options.add_options("Output")
-            ("j, json", "JSON Output")
+            ("j, jsonsource", "JSON Source Output")
             ("f, folder", "Input Folder", cxxopts::value<std::string>(), "path");
 
     options.add_options("Symbols")
@@ -167,9 +167,7 @@ bool REDSigC::checkOptions(int argc, char **argv)
         REDSigC::checkOption(result, "defaultargs", &m_options.defaultargs);
 
         if(REDSigC::checkOption<bool>(result, "j"))
-            m_options.flags |= REDSigC::JSONOutput;
-        else
-            m_options.flags |= REDSigC::SDBOutput;
+            m_options.flags |= REDSigC::JSONSourceOutput;
 
         if(REDSigC::checkOption(result, "f", &m_options.infolder))
         {

@@ -14,7 +14,7 @@ PatternGenerator::PatternGenerator(): std::list<BytePattern>() { }
 void PatternGenerator::setPrefix(const std::string &prefix) { m_prefix = prefix; }
 void PatternGenerator::setSuffix(const std::string &suffix) { m_suffix = suffix; }
 
-bool PatternGenerator::saveAsJSON(json &patterns)
+bool PatternGenerator::saveAsJSONSource(json &patterns)
 {
     for(auto it = this->begin(); it != this->end(); it++)
     {
@@ -33,8 +33,10 @@ bool PatternGenerator::saveAsJSON(json &patterns)
     return true;
 }
 
-bool PatternGenerator::saveAsSDB(REDasm::SignatureDB &sigdb)
+bool PatternGenerator::saveAsJSON(REDasm::SignatureDB &sigdb)
 {
+    sigdb.setName(this->name());
+
     for(auto it = this->begin(); it != this->end(); it++)
     {
         if(!this->isBytePatternValid(*it))

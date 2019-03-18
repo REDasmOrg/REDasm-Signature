@@ -27,8 +27,8 @@ class PatternGenerator: public std::list<BytePattern>
         void setPrefix(const std::string& prefix);
         void setSuffix(const std::string& suffix);
         bool disassemble(const BytePattern& bytepattern);
-        bool saveAsSDB(REDasm::SignatureDB& sigdb);
-        bool saveAsJSON(json& patterns);
+        bool saveAsJSON(REDasm::SignatureDB& sigdb);
+        bool saveAsJSONSource(json& patterns);
 
     public:
         virtual std::string name() const = 0;

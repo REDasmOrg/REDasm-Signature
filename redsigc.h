@@ -25,7 +25,7 @@ struct SelectedOptions
 class REDSigC
 {
     private:
-        enum { None = 0, JSONOutput = 1, SDBOutput = 2, AutoPrefix = 4, Disassemble = 8, Folder = 16 };
+        enum { None = 0, JSONSourceOutput = 1, AutoPrefix = 2, Disassemble = 4, Folder = 8 };
 
     public:
         REDSigC();
