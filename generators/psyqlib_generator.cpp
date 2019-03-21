@@ -85,7 +85,7 @@ void PsyQLibGenerator::generate(const std::string &infile)
             std::string subpattern = this->subPattern(pattern, psyqdefinition.second.offset * 2, length);
             this->fixTail(subpattern);
             this->stopAtDelaySlot(subpattern);
-            this->pushPattern(REDasm::SymbolTypes::Function, psyqdefinition.second.name, subpattern);
+            this->pushPattern(REDasm::SymbolTypes::Function, REDasm::fileNameOnly(infile) + "." + psyqdefinition.second.name, subpattern);
         }
     }
 }
