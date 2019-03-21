@@ -110,7 +110,8 @@ struct PSYQLink
 struct PSYQModule
 {
     std::string name;
-    u32 unk, offsetlink, offsetnext;
+    u32 win_datetime; // https://docs.microsoft.com/en-us/cpp/c-runtime-library/32-bit-windows-time-date-formats
+    u32 offsetlink, offsetnext;
     std::list<std::string> names;
     PSYQLink link;
 };
@@ -144,6 +145,7 @@ class PSYQLib
 
     private:
         std::list<std::string> readStringTable();
+        time_t timestamp(u32 wdatetime) const;
         std::string readString();
         PSYQModule readModule();
         PSYQState readState();

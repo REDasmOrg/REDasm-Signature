@@ -195,6 +195,24 @@ std::list<std::string> PSYQLib::readStringTable()
     return strings;
 }
 
+time_t PSYQLib::timestamp(u32 wdatetime) const
+{
+    struct tm t{0};
+
+    u16 wdate = (wdatetime & 0xFFFF0000) >> 16;
+    u16 wtime = static_cast<u16>(wdatetime & 0x0000FFFF);
+
+    t.tm_year = (((wdate & 0xFE00) >> 9) + 1980) - 1900;
+    t.tm_mon = ((wdate & 0x01E0) >> 5) - 1;
+    t.tm_mday = wdate & 0x001F;
+
+    t.tm_hour = (wtime & 0xF800) >> 11;
+    t.tm_min = (wtime & 0x07E0) >> 5;
+    t.tm_sec =  (wtime & 0x001F * 2);
+
+    return mktime(&t);
+}
+
 std::string PSYQLib::readString()
 {
     u8 length = 0;
@@ -224,7 +242,7 @@ PSYQModule PSYQLib::readModule()
         return !std::isspace(ch);
     }).base(), module.name.end());
 
-    READ_FIELD(module.unk);
+    READ_FIELD(module.win_datetime);
     READ_FIELD(module.offsetlink);
     READ_FIELD(module.offsetnext);
 
