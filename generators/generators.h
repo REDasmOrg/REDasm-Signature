@@ -17,8 +17,6 @@ struct Generators
 
     template<typename T> static PatternGenerator* generateCallback(const std::string& infile, const std::string& prefix, const std::string& suffix);
     static PatternGenerator* getPattern(const std::string& infile, const std::string& prefix, const std::string& suffix, bool verbose = true);
-    static bool saveAsJSON(REDasm::SignatureDB& sigdb);
-    static bool saveAsJSONSource(json& patterns);
     static void init();
 
     static std::list< std::unique_ptr<PatternGenerator> > active;
@@ -31,7 +29,7 @@ template<typename T> PatternGenerator* Generators::generateCallback(const std::s
     p->setPrefix(prefix);
     p->setSuffix(suffix);
 
-    if(p->generate(infile))
+    if(p->test(infile))
         return p.release();
 
     return NULL;

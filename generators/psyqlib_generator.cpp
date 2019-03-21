@@ -11,13 +11,20 @@
 
 PsyQLibGenerator::PsyQLibGenerator(): PatternGenerator() { }
 std::string PsyQLibGenerator::name() const { return "PsyQ Library"; }
+std::string PsyQLibGenerator::assembler() const { return "mips32le"; }
 
-bool PsyQLibGenerator::generate(const std::string &infile)
+bool PsyQLibGenerator::test(const std::string &infile)
+{
+    PSYQLib psyqlib(infile);
+    return psyqlib.load();
+}
+
+void PsyQLibGenerator::generate(const std::string &infile)
 {
     PSYQLib psyqlib(infile);
 
     if(!psyqlib.load())
-        return false;
+        return;
 
     for(auto& psyqmodule : psyqlib.modules())
     {
@@ -78,11 +85,9 @@ bool PsyQLibGenerator::generate(const std::string &infile)
             std::string subpattern = this->subPattern(pattern, psyqdefinition.second.offset * 2, length);
             this->fixTail(subpattern);
             this->stopAtDelaySlot(subpattern);
-            this->pushPattern(psyqdefinition.second.name, subpattern, "mips32le", 32, REDasm::SymbolTypes::Function);
+            this->pushPattern(REDasm::SymbolTypes::Function, psyqdefinition.second.name, subpattern);
         }
     }
-
-    return true;
 }
 
 void PsyQLibGenerator::stopAtDelaySlot(std::string &subpattern) const

@@ -25,19 +25,28 @@ int REDSigC::run(int argc, char **argv)
         return 1;
     }
 
+    PatternGenerator* patterngenerator = this->getPatternGenerator(infiles);
+
+    if(!patterngenerator)
+    {
+        std::cout << "ERROR: Cannot find a valid Pattern generator" << std::endl;
+        return 1;
+
+    }
+    else
+        std::cout << "Using Pattern generator: " + REDasm::quoted(patterngenerator->name()) << " (" << patterngenerator->assembler() << ")" << std::endl;
+
     for(const std::string& infile : infiles)
     {
-        auto patterngenerator = Generators::getPattern(infile,
-                                                       m_options.has(REDSigC::AutoPrefix) ? autoModuleName(infile) : m_options.prefix,
-                                                       m_options.suffix, !m_options.has(REDSigC::Disassemble));
-
-        if(!patterngenerator)
+        if(!patterngenerator->test(infile))
         {
-            if(!m_options.has(REDSigC::Disassemble))
-                std::cout << "Skipping " << infile << std::endl;
-
+            std::cout << "[v] Skipping " << infile << std::endl;
             continue;
         }
+        else
+            std::cout << "[x] Parsing " << infile << std::endl;
+
+        patterngenerator->generate(infile);
 
         if(m_options.has(REDSigC::Disassemble) && this->disassemblePattern(patterngenerator))
             return 0;
@@ -45,31 +54,41 @@ int REDSigC::run(int argc, char **argv)
 
     if(m_options.has(REDSigC::JSONSourceOutput))
     {
-        json patterns = json::array();
+        json jsonsource = json::object();
+        jsonsource["name"] = patterngenerator->name();
+        jsonsource["assembler"] = patterngenerator->assembler();
+        jsonsource["source_patterns"] = json::array();
 
-        if(!Generators::saveAsJSONSource(patterns))
+        if(!patterngenerator->writePatternsSource(jsonsource["source_patterns"]))
+        {
+            std::cout << "ERROR: Cannot save JSON Source pattern(s)" << std::endl;
             return 2;
+        }
 
         std::fstream fs(m_options.output(), std::ios::out | std::ios::trunc);
 
         if(!fs.is_open())
         {
-            std::cout << "ERROR: Cannot write JSON file" << std::endl;
+            std::cout << "ERROR: Cannot write JSON Source file" << std::endl;
             return 2;
         }
 
-        fs << patterns.dump(2);
+        fs << jsonsource.dump(2);
     }
     else
     {
         REDasm::SignatureDB signaturedb;
+        signaturedb.setAssembler(patterngenerator->assembler());
 
-        if(!Generators::saveAsJSON(signaturedb))
+        if(!patterngenerator->writePatterns(signaturedb))
+        {
+            std::cout << "ERROR: Cannot save JSON pattern(s)" << std::endl;
             return 2;
+        }
 
         if(!signaturedb.save(m_options.output()))
         {
-            std::cout << "ERROR: Cannot write SDB file" << std::endl;
+            std::cout << "ERROR: Cannot write JSON file" << std::endl;
             return 2;
         }
     }
@@ -93,6 +112,23 @@ std::string REDSigC::autoModuleName(std::string infile)
         infile.erase(dotidx);
 
     return infile;
+}
+
+PatternGenerator *REDSigC::getPatternGenerator(const std::list<std::string> &infiles)
+{
+    PatternGenerator* patterngenerator = nullptr;
+
+    for(const std::string& infile : infiles)
+    {
+        if(patterngenerator)
+            break;
+
+        patterngenerator = Generators::getPattern(infile,
+                                                  m_options.has(REDSigC::AutoPrefix) ? autoModuleName(infile) : m_options.prefix,
+                                                  m_options.suffix, !m_options.has(REDSigC::Disassemble));
+    }
+
+    return patterngenerator;
 }
 
 void REDSigC::getInputFiles(std::list<std::string> &infiles) const

@@ -28,7 +28,7 @@ PatternGenerator *Generators::getPattern(const std::string &infile, const std::s
 {
     for(auto it = active.begin(); it != active.end(); it++)
     {
-        if(!(*it)->generate(infile))
+        if(!(*it)->test(infile))
             continue;
 
         if(verbose)
@@ -52,32 +52,4 @@ PatternGenerator *Generators::getPattern(const std::string &infile, const std::s
     }
 
     return NULL;
-}
-
-bool Generators::saveAsJSON(REDasm::SignatureDB &sigdb)
-{
-    for(auto it = active.begin(); it != active.end(); it++)
-    {
-        if((*it)->saveAsJSON(sigdb))
-            continue;
-
-        std::cout << "ERROR: Cannot save JSON pattern(s)" << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
-bool Generators::saveAsJSONSource(json &patterns)
-{
-    for(auto it = active.begin(); it != active.end(); it++)
-    {
-        if((*it)->saveAsJSONSource(patterns))
-            continue;
-
-        std::cout << "ERROR: Cannot save JSON Source pattern(s)" << std::endl;
-        return false;
-    }
-
-    return true;
 }

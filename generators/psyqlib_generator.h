@@ -8,7 +8,9 @@ class PsyQLibGenerator: public PatternGenerator
     public:
         PsyQLibGenerator();
         virtual std::string name() const;
-        virtual bool generate(const std::string& infile);
+        virtual std::string assembler() const;
+        virtual bool test(const std::string& infile);
+        virtual void generate(const std::string& infile);
 
     private:
         void stopAtDelaySlot(std::string& subpattern) const;

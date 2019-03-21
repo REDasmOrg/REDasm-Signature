@@ -1,7 +1,7 @@
 #ifndef REDSIGC_H
 #define REDSIGC_H
 
-#define REDSIGC_VERSION std::string("0.5")
+#define REDSIGC_VERSION std::string("0.6")
 
 #include <vector>
 #include <string>
@@ -33,6 +33,7 @@ class REDSigC
 
     private:
         static std::string autoModuleName(std::string infile);
+        PatternGenerator* getPatternGenerator(const std::list<std::string>& infiles);
         void getInputFiles(std::list<std::string>& infiles) const;
         bool disassemblePattern(PatternGenerator* patterngenerator);
         bool checkOptions(int argc, char **argv);

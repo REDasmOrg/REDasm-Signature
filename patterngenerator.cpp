@@ -14,7 +14,7 @@ PatternGenerator::PatternGenerator(): std::list<BytePattern>() { }
 void PatternGenerator::setPrefix(const std::string &prefix) { m_prefix = prefix; }
 void PatternGenerator::setSuffix(const std::string &suffix) { m_suffix = suffix; }
 
-bool PatternGenerator::saveAsJSONSource(json &patterns)
+bool PatternGenerator::writePatternsSource(json &patterns)
 {
     for(auto it = this->begin(); it != this->end(); it++)
     {
@@ -24,8 +24,6 @@ bool PatternGenerator::saveAsJSONSource(json &patterns)
         auto patternobj = json::object();
         patternobj["name"] = it->name;
         patternobj["pattern"] = it->pattern;
-        patternobj["assembler"] = it->assembler;
-        patternobj["bits"] = it->bits;
         patternobj["symboltype"] = it->symboltype;
         patterns.push_back(patternobj);
     }
@@ -33,7 +31,7 @@ bool PatternGenerator::saveAsJSONSource(json &patterns)
     return true;
 }
 
-bool PatternGenerator::saveAsJSON(REDasm::SignatureDB &sigdb)
+bool PatternGenerator::writePatterns(REDasm::SignatureDB &sigdb)
 {
     sigdb.setName(this->name());
 
@@ -43,11 +41,9 @@ bool PatternGenerator::saveAsJSON(REDasm::SignatureDB &sigdb)
             continue;
 
         REDasm::Signature sig;
-        sig.bits = it->bits;
-        sig.symboltype = it->symboltype;
-        sig.size = SIGNATURE_BYTES(it->pattern);
-        sig.name = it->name;
-        sig.assembler = it->assembler;
+        sig.symboltype(it->symboltype);
+        sig.size(SIGNATURE_BYTES(it->pattern));
+        sig.name(it->name);
 
         if(!this->appendAllPatterns(&sig, *it))
             return false;
@@ -61,7 +57,7 @@ bool PatternGenerator::saveAsJSON(REDasm::SignatureDB &sigdb)
 bool PatternGenerator::disassemble(const BytePattern& bytepattern)
 {
     REDasm::MemoryBuffer buffer = REDasm::bytes(bytepattern.pattern);
-    std::unique_ptr<REDasm::Disassembler> disassembler(this->createDisassembler(bytepattern.assembler.c_str(), bytepattern.bits, &buffer));
+    std::unique_ptr<REDasm::Disassembler> disassembler(this->createDisassembler(&buffer));
 
     if(!disassembler)
         return false;
@@ -76,7 +72,7 @@ bool PatternGenerator::disassemble(const BytePattern& bytepattern)
 
 bool PatternGenerator::appendAllPatterns(REDasm::Signature *signature, const BytePattern &bytepattern) const
 {
-    int offset = 0;
+    u64 offset = 0;
 
     while(offset < bytepattern.pattern.size())
     {
@@ -91,18 +87,15 @@ bool PatternGenerator::appendAllPatterns(REDasm::Signature *signature, const Byt
             return false;
         }
 
-        sigpatt.size = PATTERN_SIZE(chunk.size());
-
         if(!wildcard)
         {
-            sigpatt.type = REDasm::SignaturePatternType::CheckSum;
-            sigpatt.checksum = this->chunkChecksum(chunk);
+            sigpatt.offset(offset);
+            sigpatt.checksum(this->chunkChecksum(chunk));
+            sigpatt.size(PATTERN_SIZE(chunk.size()));
+            signature->patterns().push_back(sigpatt);
         }
-        else
-            sigpatt.type = REDasm::SignaturePatternType::Skip;
 
         offset += chunk.size();
-        signature->patterns.push_back(sigpatt);
     }
 
     return true;
@@ -186,7 +179,7 @@ std::string PatternGenerator::fullName(const std::string &name) const
     return fullname + m_suffix;
 }
 
-REDasm::Disassembler *PatternGenerator::createDisassembler(const std::string& assemblerid, u32 bits, REDasm::AbstractBuffer *buffer)
+REDasm::Disassembler *PatternGenerator::createDisassembler(REDasm::AbstractBuffer *buffer)
 {
     if(buffer->empty())
     {
@@ -194,23 +187,23 @@ REDasm::Disassembler *PatternGenerator::createDisassembler(const std::string& as
         return NULL;
     }
 
-    const REDasm::AssemblerPlugin_Entry* assemblerentry = REDasm::getAssembler(assemblerid);
+    const REDasm::AssemblerPlugin_Entry* assemblerentry = REDasm::getAssembler(this->assembler());
 
     if(!assemblerentry)
     {
-        std::cout << "ERROR: Invalid Assembler: " << REDasm::quoted(assemblerid) << std::endl;
+        std::cout << "ERROR: Invalid Assembler: " << REDasm::quoted(this->assembler()) << std::endl;
         return NULL;
     }
 
-    address_t baseaddress = 1u << (bits - 1);
+    address_t baseaddress = 1u << (assemblerentry->bits() - 1);
     REDasm::BinaryLoader* loader = new REDasm::BinaryLoader(buffer);
     loader->build(assemblerentry->name(), 0, baseaddress, baseaddress);
     return new REDasm::Disassembler(assemblerentry->init(), loader); // Takes ownership
 }
 
-void PatternGenerator::pushPattern(const std::string &name, const std::string &pattern, const std::string& assembler, u32 bits, u32 symboltype)
+void PatternGenerator::pushPattern(u32 symboltype, const std::string &name, const std::string &pattern)
 {
-    this->push_back({ this->fullName(name), pattern, assembler, bits, symboltype });
+    this->push_back({ symboltype , this->fullName(name), pattern });
 }
 
 std::string PatternGenerator::subPattern(const std::string &pattern, size_t pos, size_t len) { return pattern.substr(pos, len); }
