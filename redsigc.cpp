@@ -21,7 +21,7 @@ int REDSigC::run(int argc, char **argv)
 
     if(infiles.empty())
     {
-        std::cout << "Cannot get input files" << std::endl;
+        std::cout << "ERROR: Cannot get input files" << std::endl;
         return 1;
     }
 
@@ -97,17 +97,17 @@ std::string REDSigC::autoModuleName(std::string infile)
 
 void REDSigC::getInputFiles(std::list<std::string> &infiles) const
 {
+    dirent* de = NULL;
+
     if(m_options.has(REDSigC::Folder))
     {
         DIR* dir = opendir(m_options.input().c_str());
 
         if(!dir)
         {
-            std::cout << "Cannot open " << m_options.input().c_str() << std::endl;
+            std::cout << "ERROR: Cannot open " << m_options.input().c_str() << std::endl;
             return;
         }
-
-        dirent* de = NULL;
 
         while((de = readdir(dir)) != NULL)
         {
@@ -120,7 +120,16 @@ void REDSigC::getInputFiles(std::list<std::string> &infiles) const
         closedir(dir);
     }
     else
-        infiles.push_back(m_options.input());
+    {
+        DIR* dir = opendir(m_options.input().c_str());
+
+        if(dir)
+            std::cout << "ERROR: Expected file, got a directory" << std::endl;
+        else
+            infiles.push_back(m_options.input());
+
+        closedir(dir);
+    }
 }
 
 bool REDSigC::disassemblePattern(PatternGenerator *patterngenerator)
