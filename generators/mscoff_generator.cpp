@@ -22,6 +22,10 @@ void MSCOFFGenerator::generate(const std::string &infile)
     for(auto it = functions.begin(); it != functions.end(); it++)
     {
         REDasm::BufferView view = m_loader->view(static_cast<address_t>(it->start));
+
+        if(view.eob())
+            continue;
+
         std::string pattern = REDasm::hexstring(view, it->size);
 
         const auto* relocations = m_loader->relocations(it->section);
