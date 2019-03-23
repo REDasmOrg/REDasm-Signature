@@ -36,6 +36,8 @@ int REDSigC::run(int argc, char **argv)
     else
         std::cout << "Using Pattern generator: " + REDasm::quoted(patterngenerator->name()) << std::endl;
 
+    std::string activeassembler;
+
     for(const std::string& infile : infiles)
     {
         if(!patterngenerator->test(infile))
@@ -48,6 +50,9 @@ int REDSigC::run(int argc, char **argv)
 
         patterngenerator->generate(infile);
 
+        if(activeassembler.empty())
+            activeassembler = patterngenerator->assembler();
+
         if(m_options.has(REDSigC::Disassemble) && this->disassemblePattern(patterngenerator.get()))
             return 0;
     }
@@ -56,7 +61,7 @@ int REDSigC::run(int argc, char **argv)
     {
         json jsonsource = json::object();
         jsonsource["name"] = patterngenerator->name();
-        jsonsource["assembler"] = patterngenerator->assembler();
+        jsonsource["assembler"] = activeassembler;
         jsonsource["source_patterns"] = json::array();
 
         if(!patterngenerator->writePatternsSource(jsonsource["source_patterns"]))
@@ -78,7 +83,7 @@ int REDSigC::run(int argc, char **argv)
     else
     {
         REDasm::SignatureDB signaturedb;
-        signaturedb.setAssembler(patterngenerator->assembler());
+        signaturedb.setAssembler(activeassembler);
 
         if(!patterngenerator->writePatterns(signaturedb))
         {
