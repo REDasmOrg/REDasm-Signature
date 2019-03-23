@@ -60,7 +60,7 @@ int REDSigC::run(int argc, char **argv)
     if(m_options.has(REDSigC::JSONSourceOutput))
     {
         json jsonsource = json::object();
-        jsonsource["name"] = patterngenerator->name();
+        jsonsource["name"] = m_options.name.empty() ? patterngenerator->name() : m_options.name;
         jsonsource["assembler"] = activeassembler;
         jsonsource["source_patterns"] = json::array();
 
@@ -83,6 +83,7 @@ int REDSigC::run(int argc, char **argv)
     else
     {
         REDasm::SignatureDB signaturedb;
+        signaturedb.setName(m_options.name.empty() ? patterngenerator->name() : m_options.name);
         signaturedb.setAssembler(activeassembler);
 
         if(!patterngenerator->writePatterns(signaturedb))
@@ -195,6 +196,7 @@ bool REDSigC::checkOptions(int argc, char **argv)
 
     options.add_options("Output")
             ("j, jsonsource", "JSON Source Output")
+            ("n, signaturename", "Signature Name", cxxopts::value<std::string>(), "name")
             ("f, folder", "Input Folder", cxxopts::value<std::string>(), "path");
 
     options.add_options("Symbols")
@@ -215,9 +217,11 @@ bool REDSigC::checkOptions(int argc, char **argv)
     if(argc > 1)
     {
         REDSigC::checkOption(result, "defaultargs", &m_options.defaultargs);
+        REDSigC::checkOption(result, "n", &m_options.name);
 
         if(REDSigC::checkOption<bool>(result, "j"))
             m_options.flags |= REDSigC::JSONSourceOutput;
+
 
         if(REDSigC::checkOption(result, "f", &m_options.infolder))
         {

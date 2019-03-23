@@ -33,8 +33,6 @@ bool PatternGenerator::writePatternsSource(json &patterns)
 
 bool PatternGenerator::writePatterns(REDasm::SignatureDB &sigdb)
 {
-    sigdb.setName(this->name());
-
     for(auto it = this->begin(); it != this->end(); it++)
     {
         if(!this->isBytePatternValid(*it))

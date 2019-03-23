@@ -1,7 +1,7 @@
 #ifndef REDSIGC_H
 #define REDSIGC_H
 
-#define REDSIGC_VERSION std::string("0.7")
+#define REDSIGC_VERSION std::string("0.8")
 
 #include <vector>
 #include <string>
@@ -15,7 +15,7 @@ struct SelectedOptions
 
     int flags;
     std::vector<std::string> defaultargs;
-    std::string prefix, suffix, symbol, infolder;
+    std::string prefix, suffix, symbol, infolder, name;
 
     bool has(int flag) const { return flags & flag; }
     const std::string& input() const { return defaultargs.front(); }
