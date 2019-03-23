@@ -10,6 +10,7 @@
 #include <redasm/disassembler/types/symboltable.h>
 #include <redasm/disassembler/disassembler.h>
 #include <redasm/database/signaturedb.h>
+#include <redasm/support/hash.h>
 #include <json.hpp>
 
 using json = nlohmann::json;
@@ -18,10 +19,17 @@ struct BytePattern
 {
     u32 symboltype;
     std::string name, pattern;
+
+    u16 hash() const { return REDasm::Hash::crc16(name + pattern); }
 };
 
-class PatternGenerator: public std::list<BytePattern>
+class PatternGenerator: private std::list<BytePattern>
 {
+    public:
+        using std::list<BytePattern>::begin;
+        using std::list<BytePattern>::end;
+        using std::list<BytePattern>::size;
+
     public:
         PatternGenerator();
         void setPrefix(const std::string& prefix);
@@ -29,6 +37,7 @@ class PatternGenerator: public std::list<BytePattern>
         bool disassemble(const BytePattern& bytepattern);
         bool writePatterns(REDasm::SignatureDB& sigdb);
         bool writePatternsSource(json& patterns);
+        void push(const BytePattern& bp);
 
     public:
         virtual std::string name() const = 0;
@@ -53,6 +62,7 @@ class PatternGenerator: public std::list<BytePattern>
 
     private:
         std::string m_outfolder, m_prefix, m_suffix;
+        std::set<u16> m_done;
 };
 
 #endif // PATTERNGENERATOR_H

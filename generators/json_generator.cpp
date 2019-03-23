@@ -69,7 +69,7 @@ void JSONGenerator::generate(const std::string &infile)
             continue;
         }
 
-        this->push_back(bytepattern);
+        this->push(bytepattern);
     }
 
     if(skipped > 0)

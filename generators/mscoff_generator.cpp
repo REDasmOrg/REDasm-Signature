@@ -39,6 +39,6 @@ void MSCOFFGenerator::generate(const std::string &infile)
             }
         }
 
-        this->push_back({ REDasm::SymbolTypes::Function, it->name, pattern });
+        this->push({ REDasm::SymbolTypes::Function, it->name, pattern });
     }
 }

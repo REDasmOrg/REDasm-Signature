@@ -31,6 +31,18 @@ bool PatternGenerator::writePatternsSource(json &patterns)
     return true;
 }
 
+void PatternGenerator::push(const BytePattern &bp)
+{
+    u16 checksum = bp.hash();
+    auto it = m_done.find(checksum);
+
+    if(it != m_done.end())
+        return;
+
+    m_done.insert(checksum);
+    this->emplace_back(bp);
+}
+
 bool PatternGenerator::writePatterns(REDasm::SignatureDB &sigdb)
 {
     for(auto it = this->begin(); it != this->end(); it++)
