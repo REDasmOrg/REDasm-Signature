@@ -19,7 +19,6 @@ struct Generators
     static PatternGenerator* getPattern(const std::string& infile, const std::string& prefix, const std::string& suffix, bool verbose = true);
     static void init();
 
-    static std::list< std::unique_ptr<PatternGenerator> > active;
     static std::list<GeneratorCallback> registered;
 };
 
