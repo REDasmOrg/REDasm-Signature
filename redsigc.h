@@ -1,7 +1,7 @@
 #ifndef REDSIGC_H
 #define REDSIGC_H
 
-#define REDSIGC_VERSION std::string("0.6")
+#define REDSIGC_VERSION std::string("0.7")
 
 #include <vector>
 #include <string>
@@ -19,7 +19,7 @@ struct SelectedOptions
 
     bool has(int flag) const { return flags & flag; }
     const std::string& input() const { return defaultargs.front(); }
-    const std::string& output() const { return defaultargs.back(); }
+    std::string output() const { return (defaultargs.front() == defaultargs.back()) ? (defaultargs.back() + ".json") : defaultargs.back(); }
 };
 
 class REDSigC

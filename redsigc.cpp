@@ -25,7 +25,7 @@ int REDSigC::run(int argc, char **argv)
         return 1;
     }
 
-    PatternGenerator* patterngenerator = this->getPatternGenerator(infiles);
+    std::unique_ptr<PatternGenerator> patterngenerator(this->getPatternGenerator(infiles));
 
     if(!patterngenerator)
     {
@@ -34,7 +34,7 @@ int REDSigC::run(int argc, char **argv)
 
     }
     else
-        std::cout << "Using Pattern generator: " + REDasm::quoted(patterngenerator->name()) << " (" << patterngenerator->assembler() << ")" << std::endl;
+        std::cout << "Using Pattern generator: " + REDasm::quoted(patterngenerator->name()) << std::endl;
 
     for(const std::string& infile : infiles)
     {
@@ -48,7 +48,7 @@ int REDSigC::run(int argc, char **argv)
 
         patterngenerator->generate(infile);
 
-        if(m_options.has(REDSigC::Disassemble) && this->disassemblePattern(patterngenerator))
+        if(m_options.has(REDSigC::Disassemble) && this->disassemblePattern(patterngenerator.get()))
             return 0;
     }
 
