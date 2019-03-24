@@ -224,7 +224,9 @@ void PatternGenerator::wildcard(std::string &pattern, size_t pos, size_t n)
 
     if(pos >= pattern.size())
     {
-        std::cout << "WARNING: " << pos << " >= " << pattern.size() << std::endl;
+        if(pos > pattern.size())
+            std::cout << "WARNING: " << pos << " >= " << pattern.size() << std::endl;
+
         return;
     }
 

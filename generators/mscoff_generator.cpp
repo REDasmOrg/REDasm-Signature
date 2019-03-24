@@ -27,7 +27,6 @@ void MSCOFFGenerator::generate(const std::string &infile)
             continue;
 
         std::string pattern = REDasm::hexstring(view, it->size);
-
         const auto* relocations = m_loader->relocations(it->section);
 
         if(relocations)
